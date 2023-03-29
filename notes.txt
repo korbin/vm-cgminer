@@ -1,0 +1,9 @@
+remove all deps
+find . -type d -name "*deps*" -print
+
+
+autogen.sh
+CFLAGS="-O2 -msse2" ./configure --disable-gpu --disable-adl --enable-icarus
+make clean
+make
+
