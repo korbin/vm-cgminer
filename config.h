@@ -111,7 +111,7 @@
 #define HAVE_LIBPTHREAD 1
 
 /* Defined to 1 if libudev is wanted */
-#define HAVE_LIBUDEV 1
+/* #undef HAVE_LIBUDEV */
 
 /* Define if you have libusb-1.0 */
 /* #undef HAVE_LIBUSB */

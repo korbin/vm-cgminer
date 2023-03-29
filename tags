@@ -83,15 +83,15 @@ $(top_srcdir)/configure	lib/Makefile.in	/^$(top_srcdir)\/configure: @MAINTAINER_
 .c.obj	compat/jansson/Makefile.in	/^.c.obj:$/;"	t
 .c.obj	lib/Makefile	/^.c.obj:$/;"	t
 .c.obj	lib/Makefile.in	/^.c.obj:$/;"	t
-ACLOCAL	Makefile	/^ACLOCAL = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mis/;"	m
+ACLOCAL	Makefile	/^ACLOCAL = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing acloca/;"	m
 ACLOCAL	Makefile.in	/^ACLOCAL = @ACLOCAL@$/;"	m
-ACLOCAL	ccan/Makefile	/^ACLOCAL = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mis/;"	m
+ACLOCAL	ccan/Makefile	/^ACLOCAL = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing acloca/;"	m
 ACLOCAL	ccan/Makefile.in	/^ACLOCAL = @ACLOCAL@$/;"	m
-ACLOCAL	compat/Makefile	/^ACLOCAL = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mis/;"	m
+ACLOCAL	compat/Makefile	/^ACLOCAL = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing acloca/;"	m
 ACLOCAL	compat/Makefile.in	/^ACLOCAL = @ACLOCAL@$/;"	m
-ACLOCAL	compat/jansson/Makefile	/^ACLOCAL = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mis/;"	m
+ACLOCAL	compat/jansson/Makefile	/^ACLOCAL = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing acloca/;"	m
 ACLOCAL	compat/jansson/Makefile.in	/^ACLOCAL = @ACLOCAL@$/;"	m
-ACLOCAL	lib/Makefile	/^ACLOCAL = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mis/;"	m
+ACLOCAL	lib/Makefile	/^ACLOCAL = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing acloca/;"	m
 ACLOCAL	lib/Makefile.in	/^ACLOCAL = @ACLOCAL@$/;"	m
 ACLOCAL_AMFLAGS	Makefile	/^ACLOCAL_AMFLAGS = -I m4$/;"	m
 ACLOCAL_AMFLAGS	Makefile.am	/^ACLOCAL_AMFLAGS = -I m4$/;"	m
@@ -484,35 +484,35 @@ ARG_NONNULL_H	lib/Makefile.in	/^ARG_NONNULL_H = arg-nonnull.h$/;"	m
 ARRAY_SIZE	miner.h	/^#define ARRAY_SIZE(/;"	d
 ASSERT1	driver-avalon.h	/^#define ASSERT1(/;"	d
 ASSERT1	driver-icarus.c	/^#define ASSERT1(/;"	d	file:
-AUTOCONF	Makefile	/^AUTOCONF = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOCONF	Makefile	/^AUTOCONF = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autoc/;"	m
 AUTOCONF	Makefile.in	/^AUTOCONF = @AUTOCONF@$/;"	m
-AUTOCONF	ccan/Makefile	/^AUTOCONF = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOCONF	ccan/Makefile	/^AUTOCONF = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autoc/;"	m
 AUTOCONF	ccan/Makefile.in	/^AUTOCONF = @AUTOCONF@$/;"	m
-AUTOCONF	compat/Makefile	/^AUTOCONF = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOCONF	compat/Makefile	/^AUTOCONF = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autoc/;"	m
 AUTOCONF	compat/Makefile.in	/^AUTOCONF = @AUTOCONF@$/;"	m
-AUTOCONF	compat/jansson/Makefile	/^AUTOCONF = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOCONF	compat/jansson/Makefile	/^AUTOCONF = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autoc/;"	m
 AUTOCONF	compat/jansson/Makefile.in	/^AUTOCONF = @AUTOCONF@$/;"	m
-AUTOCONF	lib/Makefile	/^AUTOCONF = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOCONF	lib/Makefile	/^AUTOCONF = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autoc/;"	m
 AUTOCONF	lib/Makefile.in	/^AUTOCONF = @AUTOCONF@$/;"	m
-AUTOHEADER	Makefile	/^AUTOHEADER = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+AUTOHEADER	Makefile	/^AUTOHEADER = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing aut/;"	m
 AUTOHEADER	Makefile.in	/^AUTOHEADER = @AUTOHEADER@$/;"	m
-AUTOHEADER	ccan/Makefile	/^AUTOHEADER = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+AUTOHEADER	ccan/Makefile	/^AUTOHEADER = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing aut/;"	m
 AUTOHEADER	ccan/Makefile.in	/^AUTOHEADER = @AUTOHEADER@$/;"	m
-AUTOHEADER	compat/Makefile	/^AUTOHEADER = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+AUTOHEADER	compat/Makefile	/^AUTOHEADER = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing aut/;"	m
 AUTOHEADER	compat/Makefile.in	/^AUTOHEADER = @AUTOHEADER@$/;"	m
-AUTOHEADER	compat/jansson/Makefile	/^AUTOHEADER = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+AUTOHEADER	compat/jansson/Makefile	/^AUTOHEADER = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing aut/;"	m
 AUTOHEADER	compat/jansson/Makefile.in	/^AUTOHEADER = @AUTOHEADER@$/;"	m
-AUTOHEADER	lib/Makefile	/^AUTOHEADER = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+AUTOHEADER	lib/Makefile	/^AUTOHEADER = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing aut/;"	m
 AUTOHEADER	lib/Makefile.in	/^AUTOHEADER = @AUTOHEADER@$/;"	m
-AUTOMAKE	Makefile	/^AUTOMAKE = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOMAKE	Makefile	/^AUTOMAKE = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autom/;"	m
 AUTOMAKE	Makefile.in	/^AUTOMAKE = @AUTOMAKE@$/;"	m
-AUTOMAKE	ccan/Makefile	/^AUTOMAKE = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOMAKE	ccan/Makefile	/^AUTOMAKE = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autom/;"	m
 AUTOMAKE	ccan/Makefile.in	/^AUTOMAKE = @AUTOMAKE@$/;"	m
-AUTOMAKE	compat/Makefile	/^AUTOMAKE = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOMAKE	compat/Makefile	/^AUTOMAKE = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autom/;"	m
 AUTOMAKE	compat/Makefile.in	/^AUTOMAKE = @AUTOMAKE@$/;"	m
-AUTOMAKE	compat/jansson/Makefile	/^AUTOMAKE = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOMAKE	compat/jansson/Makefile	/^AUTOMAKE = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autom/;"	m
 AUTOMAKE	compat/jansson/Makefile.in	/^AUTOMAKE = @AUTOMAKE@$/;"	m
-AUTOMAKE	lib/Makefile	/^AUTOMAKE = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+AUTOMAKE	lib/Makefile	/^AUTOMAKE = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing autom/;"	m
 AUTOMAKE	lib/Makefile.in	/^AUTOMAKE = @AUTOMAKE@$/;"	m
 AUTOMAKE_OPTIONS	lib/Makefile	/^AUTOMAKE_OPTIONS = 1.5 gnits$/;"	m
 AUTOMAKE_OPTIONS	lib/Makefile.am	/^AUTOMAKE_OPTIONS = 1.5 gnits$/;"	m
@@ -893,6 +893,9 @@ CONFIG_HEADER	compat/jansson/Makefile.in	/^CONFIG_HEADER = $(top_builddir)\/conf
 CONFIG_HEADER	lib/Makefile	/^CONFIG_HEADER = $(top_builddir)\/config.h$/;"	m
 CONFIG_HEADER	lib/Makefile.in	/^CONFIG_HEADER = $(top_builddir)\/config.h$/;"	m
 CONTROL	usbutils.c	/^static const char *CONTROL = "Control";$/;"	v	typeref:typename:const char *	file:
+CORE_HISTORY	driver-icarus.c	/^struct CORE_HISTORY {$/;"	s	file:
+CORE_HISTORY_SAMPLE	driver-icarus.c	/^struct CORE_HISTORY_SAMPLE {$/;"	s	file:
+CORE_MASK	driver-icarus.c	/^#define CORE_MASK /;"	d	file:
 CPP	Makefile	/^CPP = gcc -E$/;"	m
 CPP	Makefile.in	/^CPP = @CPP@$/;"	m
 CPP	ccan/Makefile	/^CPP = gcc -E$/;"	m
@@ -1743,6 +1746,7 @@ GZIP_ENV	Makefile	/^GZIP_ENV = --best$/;"	m
 GZIP_ENV	Makefile.in	/^GZIP_ENV = --best$/;"	m
 GetProcAddress	adl.c	/^static void *GetProcAddress(void *pLibrary, const char *name)$/;"	f	typeref:typename:void *	file:
 H	sph_blake.h	/^	sph_u32 H[8];$/;"	m	struct:__anon127aa9a40108	typeref:typename:sph_u32[8]
+HASHRATE_AVG_OVER_SECS	driver-icarus.c	/^#define HASHRATE_AVG_OVER_SECS /;"	d	file:
 HASHTABLE_H	compat/jansson/hashtable.h	/^#define HASHTABLE_H$/;"	d
 HASH_ADD	uthash.h	/^#define HASH_ADD(/;"	d
 HASH_ADD_INT	uthash.h	/^#define HASH_ADD_INT(/;"	d
@@ -1919,7 +1923,6 @@ HAVE_INTTYPES_H	config.h	/^#define HAVE_INTTYPES_H /;"	d
 HAVE_INTTYPES_H	lib/Makefile	/^HAVE_INTTYPES_H = 1$/;"	m
 HAVE_INTTYPES_H	lib/Makefile.in	/^HAVE_INTTYPES_H = @HAVE_INTTYPES_H@$/;"	m
 HAVE_LIBPTHREAD	config.h	/^#define HAVE_LIBPTHREAD /;"	d
-HAVE_LIBUDEV	config.h	/^#define HAVE_LIBUDEV /;"	d
 HAVE_LIBUDEV	configure.ac	/^AM_CONDITIONAL([HAVE_LIBUDEV], [test x$libudev != xno])$/;"	c
 HAVE_LIBUSB	configure.ac	/^      AC_DEFINE(HAVE_LIBUSB, 1, [Define if you have libusb-1.0])$/;"	d
 HAVE_LONG_LONG_INT	Makefile	/^HAVE_LONG_LONG_INT = 1$/;"	m
@@ -2898,15 +2901,15 @@ MAINT	lib/Makefile.in	/^MAINT = @MAINT@$/;"	m
 MAINTAINERCLEANFILES	lib/Makefile	/^MAINTAINERCLEANFILES = $/;"	m
 MAINTAINERCLEANFILES	lib/Makefile.am	/^MAINTAINERCLEANFILES =$/;"	m
 MAINTAINERCLEANFILES	lib/Makefile.in	/^MAINTAINERCLEANFILES = $/;"	m
-MAKEINFO	Makefile	/^MAKEINFO = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+MAKEINFO	Makefile	/^MAKEINFO = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing makei/;"	m
 MAKEINFO	Makefile.in	/^MAKEINFO = @MAKEINFO@$/;"	m
-MAKEINFO	ccan/Makefile	/^MAKEINFO = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+MAKEINFO	ccan/Makefile	/^MAKEINFO = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing makei/;"	m
 MAKEINFO	ccan/Makefile.in	/^MAKEINFO = @MAKEINFO@$/;"	m
-MAKEINFO	compat/Makefile	/^MAKEINFO = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+MAKEINFO	compat/Makefile	/^MAKEINFO = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing makei/;"	m
 MAKEINFO	compat/Makefile.in	/^MAKEINFO = @MAKEINFO@$/;"	m
-MAKEINFO	compat/jansson/Makefile	/^MAKEINFO = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+MAKEINFO	compat/jansson/Makefile	/^MAKEINFO = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing makei/;"	m
 MAKEINFO	compat/jansson/Makefile.in	/^MAKEINFO = @MAKEINFO@$/;"	m
-MAKEINFO	lib/Makefile	/^MAKEINFO = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/mi/;"	m
+MAKEINFO	lib/Makefile	/^MAKEINFO = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/missing makei/;"	m
 MAKEINFO	lib/Makefile.in	/^MAKEINFO = @MAKEINFO@$/;"	m
 MATH_LIBS	Makefile	/^MATH_LIBS = -lm$/;"	m
 MATH_LIBS	Makefile.in	/^MATH_LIBS = @MATH_LIBS@$/;"	m
@@ -2924,6 +2927,8 @@ MAX	miner.h	/^#define MAX(/;"	d
 MAXBUFFERS	findnonce.h	/^#define MAXBUFFERS /;"	d
 MAXRECEIVESIZE	API.java	/^	static private final int MAXRECEIVESIZE = 65535;$/;"	f	class:API	file:
 MAXTHREADS	findnonce.h	/^#define MAXTHREADS /;"	d
+MAX_CORES	driver-icarus.c	/^#define MAX_CORES /;"	d	file:
+MAX_CORE_HISTORY_SAMPLES	driver-icarus.c	/^#define MAX_CORE_HISTORY_SAMPLES /;"	d	file:
 MAX_FPGA	miner.h	/^#define MAX_FPGA /;"	d
 MAX_GPUDEVICES	miner.h	/^#define MAX_GPUDEVICES /;"	d
 MAX_INTEGER_STR_LENGTH	compat/jansson/dump.c	/^#define MAX_INTEGER_STR_LENGTH /;"	d	file:
@@ -4122,16 +4127,16 @@ TRUESTR	api.c	/^static const char *TRUESTR = "true";$/;"	v	typeref:typename:cons
 TVF	driver-bflsc.c	/^#define TVF(/;"	d	file:
 TVFMS	driver-bflsc.c	/^#define TVFMS(/;"	d	file:
 UBI_BIG	skein.c	/^#define UBI_BIG(/;"	d	file:
-UDEV_LIBS	Makefile	/^UDEV_LIBS = -ludev$/;"	m
+UDEV_LIBS	Makefile	/^UDEV_LIBS = $/;"	m
 UDEV_LIBS	Makefile.in	/^UDEV_LIBS = @UDEV_LIBS@$/;"	m
-UDEV_LIBS	ccan/Makefile	/^UDEV_LIBS = -ludev$/;"	m
+UDEV_LIBS	ccan/Makefile	/^UDEV_LIBS = $/;"	m
 UDEV_LIBS	ccan/Makefile.in	/^UDEV_LIBS = @UDEV_LIBS@$/;"	m
-UDEV_LIBS	compat/Makefile	/^UDEV_LIBS = -ludev$/;"	m
+UDEV_LIBS	compat/Makefile	/^UDEV_LIBS = $/;"	m
 UDEV_LIBS	compat/Makefile.in	/^UDEV_LIBS = @UDEV_LIBS@$/;"	m
-UDEV_LIBS	compat/jansson/Makefile	/^UDEV_LIBS = -ludev$/;"	m
+UDEV_LIBS	compat/jansson/Makefile	/^UDEV_LIBS = $/;"	m
 UDEV_LIBS	compat/jansson/Makefile.in	/^UDEV_LIBS = @UDEV_LIBS@$/;"	m
 UDEV_LIBS	configure.ac	/^AC_SUBST(UDEV_LIBS)$/;"	s
-UDEV_LIBS	lib/Makefile	/^UDEV_LIBS = -ludev$/;"	m
+UDEV_LIBS	lib/Makefile	/^UDEV_LIBS = $/;"	m
 UDEV_LIBS	lib/Makefile.in	/^UDEV_LIBS = @UDEV_LIBS@$/;"	m
 UINT16_C	lib/stdint.in.h	/^#define UINT16_C(/;"	d
 UINT16_MAX	lib/stdint.in.h	/^#define UINT16_MAX /;"	d
@@ -4740,45 +4745,45 @@ _usb_transfer	usbutils.c	/^int _usb_transfer(struct cgpu_info *cgpu, uint8_t req
 _usb_write	usbutils.c	/^int _usb_write(struct cgpu_info *cgpu, int ep, char *buf, size_t bufsiz, int *processed, unsigne/;"	f	typeref:typename:int
 _verify_intmax_size	lib/stdint.in.h	/^typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)$/;"	t	typeref:typename:int[sizeof (intmax_t)==sizeof (uintmax_t)?1:-1]
 abandon_work	cgminer.c	/^static inline bool abandon_work(struct work *work, struct timeval *wdiff, uint64_t hashes)$/;"	f	typeref:typename:bool	file:
-abs_builddir	Makefile	/^abs_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_builddir	Makefile	/^abs_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_builddir	Makefile.in	/^abs_builddir = @abs_builddir@$/;"	m
-abs_builddir	ccan/Makefile	/^abs_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/ccan$/;"	m
+abs_builddir	ccan/Makefile	/^abs_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/ccan$/;"	m
 abs_builddir	ccan/Makefile.in	/^abs_builddir = @abs_builddir@$/;"	m
-abs_builddir	compat/Makefile	/^abs_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat$/;"	m
+abs_builddir	compat/Makefile	/^abs_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat$/;"	m
 abs_builddir	compat/Makefile.in	/^abs_builddir = @abs_builddir@$/;"	m
-abs_builddir	compat/jansson/Makefile	/^abs_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat\//;"	m
+abs_builddir	compat/jansson/Makefile	/^abs_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat\/jansson$/;"	m
 abs_builddir	compat/jansson/Makefile.in	/^abs_builddir = @abs_builddir@$/;"	m
-abs_builddir	lib/Makefile	/^abs_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/lib$/;"	m
+abs_builddir	lib/Makefile	/^abs_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/lib$/;"	m
 abs_builddir	lib/Makefile.in	/^abs_builddir = @abs_builddir@$/;"	m
-abs_srcdir	Makefile	/^abs_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_srcdir	Makefile	/^abs_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_srcdir	Makefile.in	/^abs_srcdir = @abs_srcdir@$/;"	m
-abs_srcdir	ccan/Makefile	/^abs_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/ccan$/;"	m
+abs_srcdir	ccan/Makefile	/^abs_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/ccan$/;"	m
 abs_srcdir	ccan/Makefile.in	/^abs_srcdir = @abs_srcdir@$/;"	m
-abs_srcdir	compat/Makefile	/^abs_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat$/;"	m
+abs_srcdir	compat/Makefile	/^abs_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat$/;"	m
 abs_srcdir	compat/Makefile.in	/^abs_srcdir = @abs_srcdir@$/;"	m
-abs_srcdir	compat/jansson/Makefile	/^abs_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat\/j/;"	m
+abs_srcdir	compat/jansson/Makefile	/^abs_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/compat\/jansson$/;"	m
 abs_srcdir	compat/jansson/Makefile.in	/^abs_srcdir = @abs_srcdir@$/;"	m
-abs_srcdir	lib/Makefile	/^abs_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/lib$/;"	m
+abs_srcdir	lib/Makefile	/^abs_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/lib$/;"	m
 abs_srcdir	lib/Makefile.in	/^abs_srcdir = @abs_srcdir@$/;"	m
-abs_top_builddir	Makefile	/^abs_top_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_builddir	Makefile	/^abs_top_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_builddir	Makefile.in	/^abs_top_builddir = @abs_top_builddir@$/;"	m
-abs_top_builddir	ccan/Makefile	/^abs_top_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_builddir	ccan/Makefile	/^abs_top_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_builddir	ccan/Makefile.in	/^abs_top_builddir = @abs_top_builddir@$/;"	m
-abs_top_builddir	compat/Makefile	/^abs_top_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_builddir	compat/Makefile	/^abs_top_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_builddir	compat/Makefile.in	/^abs_top_builddir = @abs_top_builddir@$/;"	m
-abs_top_builddir	compat/jansson/Makefile	/^abs_top_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_builddir	compat/jansson/Makefile	/^abs_top_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_builddir	compat/jansson/Makefile.in	/^abs_top_builddir = @abs_top_builddir@$/;"	m
-abs_top_builddir	lib/Makefile	/^abs_top_builddir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_builddir	lib/Makefile	/^abs_top_builddir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_builddir	lib/Makefile.in	/^abs_top_builddir = @abs_top_builddir@$/;"	m
-abs_top_srcdir	Makefile	/^abs_top_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_srcdir	Makefile	/^abs_top_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_srcdir	Makefile.in	/^abs_top_srcdir = @abs_top_srcdir@$/;"	m
-abs_top_srcdir	ccan/Makefile	/^abs_top_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_srcdir	ccan/Makefile	/^abs_top_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_srcdir	ccan/Makefile.in	/^abs_top_srcdir = @abs_top_srcdir@$/;"	m
-abs_top_srcdir	compat/Makefile	/^abs_top_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_srcdir	compat/Makefile	/^abs_top_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_srcdir	compat/Makefile.in	/^abs_top_srcdir = @abs_top_srcdir@$/;"	m
-abs_top_srcdir	compat/jansson/Makefile	/^abs_top_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_srcdir	compat/jansson/Makefile	/^abs_top_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_srcdir	compat/jansson/Makefile.in	/^abs_top_srcdir = @abs_top_srcdir@$/;"	m
-abs_top_srcdir	lib/Makefile	/^abs_top_srcdir = \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
+abs_top_srcdir	lib/Makefile	/^abs_top_srcdir = \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate$/;"	m
 abs_top_srcdir	lib/Makefile.in	/^abs_top_srcdir = @abs_top_srcdir@$/;"	m
 ac_ct_CC	Makefile	/^ac_ct_CC = gcc$/;"	m
 ac_ct_CC	Makefile.in	/^ac_ct_CC = @ac_ct_CC@$/;"	m
@@ -4795,6 +4800,7 @@ accepted	miner.h	/^	int accepted;$/;"	m	struct:cgpu_info	typeref:typename:int
 act_diff	cgminer.c	/^uint64_t act_diff = 0;$/;"	v	typeref:typename:uint64_t
 act_share	cgminer.c	/^static char act_share[8] = "0";$/;"	v	typeref:typename:char[8]	file:
 action_array	lib/sigaction.c	/^static struct sigaction volatile action_array[NSIG] \/* = 0 *\/;$/;"	v	typeref:struct:sigaction volatile[]	file:
+active_core_count	driver-icarus.c	/^	int active_core_count;$/;"	m	struct:ICARUS_INFO	typeref:typename:int	file:
 add_cgpu	cgminer.c	/^bool add_cgpu(struct cgpu_info *cgpu)$/;"	f	typeref:typename:bool
 add_in_use	usbutils.c	/^static void add_in_use(uint8_t bus_number, uint8_t device_address)$/;"	f	typeref:typename:void	file:
 add_opt	ccan/opt/opt.c	/^static void add_opt(const struct opt_table *entry)$/;"	f	typeref:typename:void	file:
@@ -5856,6 +5862,7 @@ copy_drv	cgminer.c	/^struct device_drv *copy_drv(struct device_drv *drv)$/;"	f	t
 copy_time	util.c	/^void copy_time(struct timeval *dest, const struct timeval *src)$/;"	f	typeref:typename:void
 copy_work	cgminer.c	/^struct work *copy_work(struct work *base_work)$/;"	f	typeref:struct:work *
 copyadvanceafter	api.c	/^static void copyadvanceafter(char ch, char **param, char **buf)$/;"	f	typeref:typename:void	file:
+core_history	driver-icarus.c	/^	struct CORE_HISTORY core_history[MAX_CORES];$/;"	m	struct:ICARUS_INFO	typeref:struct:CORE_HISTORY[]	file:
 count	driver-icarus.c	/^	int count;$/;"	m	struct:ICARUS_INFO	typeref:typename:int	file:
 count	usbutils.c	/^	uint32_t count;$/;"	m	struct:driver_count	typeref:typename:uint32_t	file:
 count	usbutils.c	/^	uint64_t count;$/;"	m	struct:cg_usb_stats_item	typeref:typename:uint64_t	file:
@@ -6061,6 +6068,7 @@ diff_rejected	miner.h	/^	double diff_rejected;$/;"	m	struct:cgpu_info	typeref:ty
 diff_rejected	miner.h	/^	double diff_rejected;$/;"	m	struct:pool	typeref:typename:double
 diff_stale	miner.h	/^	double diff_stale;$/;"	m	struct:pool	typeref:typename:double
 diffone	cgminer.c	/^static const uint64_t diffone = 0xFFFF000000000000ull;$/;"	v	typeref:typename:const uint64_t	file:
+disable_core	driver-icarus.c	/^void disable_core(struct ICARUS_INFO *info, uint8_t core_num)$/;"	f	typeref:typename:void
 disable_curses	cgminer.c	/^static void disable_curses(void)$/;"	f	typeref:typename:void	file:
 disable_pool	cgminer.c	/^static void disable_pool(struct pool *pool)$/;"	f	typeref:typename:void	file:
 disablepool	api.c	/^static void disablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool /;"	f	typeref:typename:void	file:
@@ -6242,11 +6250,13 @@ dvidir	lib/Makefile	/^dvidir = ${docdir}$/;"	m
 dvidir	lib/Makefile.in	/^dvidir = @dvidir@$/;"	m
 dynamic	miner.h	/^	bool dynamic;$/;"	m	struct:cgpu_info	typeref:typename:bool
 enable	cgminer.c	/^	bool enable;$/;"	m	struct:schedtime	typeref:typename:bool	file:
+enable_core	driver-icarus.c	/^void enable_core(struct ICARUS_INFO *info, uint8_t core_num)$/;"	f	typeref:typename:void
 enable_curses	cgminer.c	/^void enable_curses(void) {$/;"	f	typeref:typename:void
 enable_debug	cgminer.c	/^static char *enable_debug(bool *flag)$/;"	f	typeref:typename:char *	file:
 enable_device	cgminer.c	/^void enable_device(struct cgpu_info *cgpu)$/;"	f	typeref:typename:void
 enable_pool	cgminer.c	/^static void enable_pool(struct pool *pool)$/;"	f	typeref:typename:void	file:
 enabled	miner.h	/^	enum pool_enable enabled;$/;"	m	struct:pool	typeref:enum:pool_enable
+enabled_cores	driver-icarus.c	/^	uint16_t enabled_cores;$/;"	m	struct:ICARUS_INFO	typeref:typename:uint16_t	file:
 enabled_pools	cgminer.c	/^int total_pools, enabled_pools;$/;"	v	typeref:typename:int
 enablepool	api.c	/^static void enablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool i/;"	f	typeref:typename:void	file:
 endOfBlock	driver-bflsc.c	/^	uint8_t endOfBlock;$/;"	m	struct:QueueJobStructure	typeref:typename:uint8_t	file:
@@ -6293,6 +6303,7 @@ exit	ccan/opt/test/run-helpers.c	/^#define exit(/;"	d	file:
 exited	ccan/opt/test/run-checkopt.c	/^static jmp_buf exited;$/;"	v	typeref:typename:jmp_buf	file:
 exited	ccan/opt/test/run-helpers.c	/^static jmp_buf exited;$/;"	v	typeref:typename:jmp_buf	file:
 expand_mult	uthash.h	/^   unsigned expand_mult;$/;"	m	struct:UT_hash_bucket	typeref:typename:unsigned
+expected_cores	driver-icarus.c	/^	uint8_t expected_cores;$/;"	m	struct:ICARUS_INFO	typeref:typename:uint8_t	file:
 ext_signal	lib/sigprocmask.c	/^ext_signal (int sig, handler_t handler)$/;"	f	typeref:typename:handler_t	file:
 extraSolutions	libztex.h	/^	uint8_t extraSolutions;$/;"	m	struct:libztex_device	typeref:typename:uint8_t
 extract_sockaddr	util.c	/^bool extract_sockaddr(struct pool *pool, char *url)$/;"	f	typeref:typename:bool
@@ -6332,6 +6343,7 @@ first_lopt	ccan/opt/opt.c	/^const char *first_lopt(unsigned *i, unsigned *len)$/
 first_name	ccan/opt/opt.c	/^static const char *first_name(const char *names, unsigned *len)$/;"	f	typeref:typename:const char *	file:
 first_opt	ccan/opt/opt.c	/^static const char *first_opt(unsigned *i, unsigned *len)$/;"	f	typeref:typename:const char *	file:
 first_sopt	ccan/opt/opt.c	/^const char *first_sopt(unsigned *i)$/;"	f	typeref:typename:const char *
+first_timeout	driver-icarus.c	/^	bool first_timeout;$/;"	m	struct:ICARUS_INFO	typeref:typename:bool	file:
 first_work	miner.h	/^	struct timeval first_work;$/;"	m	struct:modminer_fpga_state	typeref:struct:timeval
 fiveA	miner.h	/^	cl_uint oneA, twoA, threeA, fourA, fiveA, sixA, sevenA;$/;"	m	struct:__anonc738fa960208	typeref:typename:cl_uint
 flash_led	driver-bflsc.c	/^	bool flash_led;$/;"	m	struct:bflsc_info	typeref:typename:bool	file:
@@ -6426,7 +6438,9 @@ get_benchmark_work	cgminer.c	/^static void get_benchmark_work(struct work *work)
 get_bflsc_statline_before	driver-bflsc.c	/^static void get_bflsc_statline_before(char *buf, struct cgpu_info *bflsc)$/;"	f	typeref:typename:void	file:
 get_bitforce_statline_before	driver-bitforce.c	/^static void get_bitforce_statline_before(char *buf, struct cgpu_info *bitforce)$/;"	f	typeref:typename:void	file:
 get_clocks	driver-icarus.c	/^static void get_clocks(int this_option_offset, int *cainsmore_clock)$/;"	f	typeref:typename:void	file:
+get_core_hashrate_average	driver-icarus.c	/^uint32_t get_core_hashrate_average(struct ICARUS_INFO *info, uint8_t core_num, uint32_t seconds,/;"	f	typeref:typename:uint32_t
 get_datestamp	cgminer.c	/^void get_datestamp(char *f, struct timeval *tv)$/;"	f	typeref:typename:void
+get_device_hashrate_average	driver-icarus.c	/^uint32_t get_device_hashrate_average(struct ICARUS_INFO *info, uint32_t seconds, struct timeval /;"	f	typeref:typename:uint32_t
 get_devices	cgminer.c	/^struct cgpu_info *get_devices(int id)$/;"	f	typeref:struct:cgpu_info *
 get_enginerange	adl.c	/^static void get_enginerange(int gpu, int *imin, int *imax)$/;"	f	typeref:typename:void	file:
 get_expect	driver-modminer.c	/^static bool get_expect(struct cgpu_info *modminer, FILE *f, char c)$/;"	f	typeref:typename:bool	file:
@@ -6724,6 +6738,7 @@ hashes_sent	driver-bflsc.c	/^	uint64_t hashes_sent;$/;"	m	struct:bflsc_dev	typer
 hashes_sent	driver-bflsc.c	/^	uint64_t hashes_sent;$/;"	m	struct:bflsc_info	typeref:typename:uint64_t	file:
 hashes_unsent	driver-bflsc.c	/^	uint64_t hashes_unsent;$/;"	m	struct:bflsc_dev	typeref:typename:uint64_t	file:
 hashmeter	cgminer.c	/^static void hashmeter(int thr_id, struct timeval *diff,$/;"	f	typeref:typename:void	file:
+hashrate	driver-icarus.c	/^	uint32_t hashrate;$/;"	m	struct:CORE_HISTORY_SAMPLE	typeref:typename:uint32_t	file:
 hashtable	compat/jansson/hashtable.h	/^typedef struct hashtable {$/;"	s
 hashtable	compat/jansson/jansson_private.h	/^    hashtable_t hashtable;$/;"	m	struct:__anon815779cf0108	typeref:typename:hashtable_t
 hashtable_bucket	compat/jansson/hashtable.h	/^struct hashtable_bucket {$/;"	s
@@ -6900,8 +6915,10 @@ icarus_info	driver-icarus.c	/^static struct ICARUS_INFO **icarus_info;$/;"	v	typ
 icarus_open	driver-icarus.c	/^#define icarus_open(/;"	d	file:
 icarus_open2	driver-icarus.c	/^#define icarus_open2(/;"	d	file:
 icarus_prepare	driver-icarus.c	/^static bool icarus_prepare(struct thr_info *thr)$/;"	f	typeref:typename:bool	file:
+icarus_prepare_work	driver-icarus.c	/^bool icarus_prepare_work(struct thr_info __maybe_unused *thr, struct work __maybe_unused *work)$/;"	f	typeref:typename:bool
 icarus_scanhash	driver-icarus.c	/^static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,$/;"	f	typeref:typename:int64_t	file:
 icarus_shutdown	driver-icarus.c	/^static void icarus_shutdown(struct thr_info *thr)$/;"	f	typeref:typename:void	file:
+icarus_statline	driver-icarus.c	/^void icarus_statline(char *logline, struct cgpu_info *cgpu)$/;"	f	typeref:typename:void
 icarus_write	driver-icarus.c	/^static int icarus_write(int fd, const void *buf, size_t bufLen)$/;"	f	typeref:typename:int	file:
 id	adl.c	/^	int id;$/;"	m	struct:gpu_adapters	typeref:typename:int	file:
 id	api-example.c	/^		int id;$/;"	m	struct:WSAERRORS	typeref:typename:int	file:
@@ -7158,15 +7175,15 @@ install-strip	compat/jansson/Makefile	/^install-strip:$/;"	t
 install-strip	compat/jansson/Makefile.in	/^install-strip:$/;"	t
 install-strip	lib/Makefile	/^install-strip:$/;"	t
 install-strip	lib/Makefile.in	/^install-strip:$/;"	t
-install_sh	Makefile	/^install_sh = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+install_sh	Makefile	/^install_sh = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/install-sh$/;"	m
 install_sh	Makefile.in	/^install_sh = @install_sh@$/;"	m
-install_sh	ccan/Makefile	/^install_sh = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+install_sh	ccan/Makefile	/^install_sh = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/install-sh$/;"	m
 install_sh	ccan/Makefile.in	/^install_sh = @install_sh@$/;"	m
-install_sh	compat/Makefile	/^install_sh = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+install_sh	compat/Makefile	/^install_sh = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/install-sh$/;"	m
 install_sh	compat/Makefile.in	/^install_sh = @install_sh@$/;"	m
-install_sh	compat/jansson/Makefile	/^install_sh = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+install_sh	compat/jansson/Makefile	/^install_sh = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/install-sh$/;"	m
 install_sh	compat/jansson/Makefile.in	/^install_sh = @install_sh@$/;"	m
-install_sh	lib/Makefile	/^install_sh = ${SHELL} \/home\/vmadmin\/radiant\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\//;"	m
+install_sh	lib/Makefile	/^install_sh = ${SHELL} \/home\/quayd\/cgminer_3.1.1_BCU1525_RXD_source_deke_midstate\/install-sh$/;"	m
 install_sh	lib/Makefile.in	/^install_sh = @install_sh@$/;"	m
 install_sh_DATA	Makefile	/^install_sh_DATA = $(install_sh) -c -m 644$/;"	m
 install_sh_DATA	Makefile.in	/^install_sh_DATA = $(install_sh) -c -m 644$/;"	m
@@ -7436,6 +7453,7 @@ last_column	compat/jansson/load.c	/^    int column, last_column;$/;"	m	struct:__
 last_dev_result	driver-bflsc.c	/^	struct timeval last_dev_result; \/\/ array > 0$/;"	m	struct:bflsc_dev	typeref:struct:timeval	file:
 last_device_valid_work	miner.h	/^	time_t last_device_valid_work;$/;"	m	struct:cgpu_info	typeref:typename:time_t
 last_diff	miner.h	/^	double last_diff;$/;"	m	struct:cgminer_pool_stats	typeref:typename:double
+last_interval_timeout	driver-icarus.c	/^	struct timeval last_interval_timeout;$/;"	m	struct:ICARUS_INFO	typeref:struct:timeval	file:
 last_message_tv	miner.h	/^	struct timeval last_message_tv;$/;"	m	struct:cgpu_info	typeref:struct:timeval
 last_nettime	util.c	/^static void last_nettime(struct timeval *last)$/;"	f	typeref:typename:void	file:
 last_nodev	usbutils.h	/^	struct timeval last_nodev;$/;"	m	struct:cg_usb_info	typeref:struct:timeval
@@ -7918,6 +7936,7 @@ netacc_lock	cgminer.c	/^pthread_rwlock_t netacc_lock;$/;"	v	typeref:typename:pth
 nettime	util.c	/^struct timeval nettime;$/;"	v	typeref:struct:timeval
 new_blocks	cgminer.c	/^unsigned int new_blocks;$/;"	v	typeref:typename:unsigned int
 new_devices	cgminer.c	/^static int new_devices;$/;"	v	typeref:typename:int	file:
+new_hashcount_since_last_return	driver-icarus.c	/^uint32_t new_hashcount_since_last_return(struct ICARUS_INFO *info, struct timeval *until)$/;"	f	typeref:typename:uint32_t
 new_threads	cgminer.c	/^static int new_threads;$/;"	v	typeref:typename:int	file:
 new_work	miner.h	/^	bool new_work;$/;"	m	struct:cgpu_info	typeref:typename:bool
 new_work	miner.h	/^	bool new_work;$/;"	m	struct:modminer_fpga_state	typeref:typename:bool
@@ -8327,6 +8346,9 @@ prev	miner.h	/^	struct api_data *prev;$/;"	m	struct:api_data	typeref:struct:api_
 prev	usbutils.c	/^	struct usb_in_use_list *prev;$/;"	m	struct:usb_in_use_list	typeref:struct:usb_in_use_list *	file:
 prev	uthash.h	/^   void *prev;                       \/* prev element in app order      *\/$/;"	m	struct:UT_hash_handle	typeref:typename:void *
 prev_hash	miner.h	/^	char *prev_hash;$/;"	m	struct:stratum_work	typeref:typename:char *
+prev_hashcount	driver-icarus.c	/^	uint32_t prev_hashcount;$/;"	m	struct:ICARUS_INFO	typeref:typename:uint32_t	file:
+prev_hashcount_return	driver-icarus.c	/^	struct timeval prev_hashcount_return;$/;"	m	struct:ICARUS_INFO	typeref:struct:timeval	file:
+prev_hashrate	driver-icarus.c	/^	uint32_t prev_hashrate;$/;"	m	struct:ICARUS_INFO	typeref:typename:uint32_t	file:
 previousblockhash	miner.h	/^	unsigned char previousblockhash[32];$/;"	m	struct:pool	typeref:typename:unsigned char[32]
 primary_thread	miner.h	/^	bool		primary_thread;$/;"	m	struct:thr_info	typeref:typename:bool
 primes	compat/jansson/hashtable.c	/^static size_t primes[] = {$/;"	v	typeref:typename:size_t[]	file:
@@ -8498,6 +8520,9 @@ restart_threads	cgminer.c	/^static void restart_threads(void)$/;"	f	typeref:type
 restart_wait	cgminer.c	/^int restart_wait(unsigned int mstime)$/;"	f	typeref:typename:int
 restrict	config.h	/^#define restrict /;"	d
 result_id	driver-bflsc.c	/^	uint64_t result_id; \/\/ counter when results were last checked$/;"	m	struct:bflsc_dev	typeref:typename:uint64_t	file:
+result_is_counter	miner.h	/^	bool result_is_counter;$/;"	m	struct:cgpu_info	typeref:typename:bool
+result_is_estimate	miner.h	/^	bool result_is_estimate;$/;"	m	struct:cgpu_info	typeref:typename:bool
+result_is_nonce	miner.h	/^	bool result_is_nonce;$/;"	m	struct:cgpu_info	typeref:typename:bool
 results	miner.h	/^	int results;$/;"	m	struct:cgpu_info	typeref:typename:int
 results_sleep_time	driver-bflsc.c	/^	unsigned int results_sleep_time;$/;"	m	struct:bflsc_info	typeref:typename:unsigned int	file:
 results_thr	driver-bflsc.c	/^	struct thr_info results_thr;$/;"	m	struct:bflsc_info	typeref:struct:thr_info	file:
@@ -8558,6 +8583,8 @@ sa_sigaction	lib/signal.h	/^#   define sa_sigaction /;"	d
 sa_sigaction	lib/signal.h	/^#  define sa_sigaction /;"	d
 salsa20_8	scrypt.c	/^salsa20_8(uint32_t B[16], const uint32_t Bx[16])$/;"	f	typeref:typename:void	file:
 salt_zero_small	blake.c	/^static const sph_u32 salt_zero_small[4] = { 0, 0, 0, 0 };$/;"	v	typeref:typename:const sph_u32[4]	file:
+sample_time	driver-icarus.c	/^	struct timeval sample_time;$/;"	m	struct:CORE_HISTORY_SAMPLE	typeref:struct:timeval	file:
+samples	driver-icarus.c	/^	struct CORE_HISTORY_SAMPLE samples[MAX_CORE_HISTORY_SAMPLES];$/;"	m	struct:CORE_HISTORY	typeref:struct:CORE_HISTORY_SAMPLE[]	file:
 save_and_jump	ccan/opt/test/run-checkopt.c	/^static void save_and_jump(int ecode, const char *fmt, ...)$/;"	f	typeref:typename:void	file:
 save_err_output	ccan/opt/test/utils.c	/^void save_err_output(const char *fmt, ...)$/;"	f	typeref:typename:void
 saved_fprintf	ccan/opt/test/run-helpers.c	/^static int saved_fprintf(FILE *ignored, const char *fmt, ...)$/;"	f	typeref:typename:int	file:
@@ -9374,6 +9401,9 @@ uninstall-dist_bitstreamsDATA	Makefile.in	/^uninstall-dist_bitstreamsDATA:$/;"	t
 unlikely	miner.h	/^#define unlikely(/;"	d
 unlock_adl	adl.c	/^static inline void unlock_adl(void)$/;"	f	typeref:typename:void	file:
 unlock_curses	cgminer.c	/^static inline void unlock_curses(void)$/;"	f	typeref:typename:void	file:
+update_active_core	driver-icarus.c	/^bool update_active_core(struct ICARUS_INFO *info, struct timeval *since_time, uint16_t core_num,/;"	f	typeref:typename:bool
+update_active_device	driver-icarus.c	/^bool update_active_device(struct ICARUS_INFO *info, struct timeval *since_time, struct timeval */;"	f	typeref:typename:bool
+update_core_history	driver-icarus.c	/^void update_core_history(struct ICARUS_INFO *info, uint8_t core_num, struct timeval *sample_time/;"	f	typeref:typename:void
 update_count	driver-bflsc.c	/^	uint32_t update_count;$/;"	m	struct:bflsc_info	typeref:typename:uint32_t	file:
 update_gbt	cgminer.c	/^static void update_gbt(struct pool *pool)$/;"	f	typeref:typename:void	file:
 update_usb_stats	usbutils.c	/^void update_usb_stats(__maybe_unused struct cgpu_info *cgpu)$/;"	f	typeref:typename:void
@@ -9503,6 +9533,8 @@ work	miner.h	/^struct work {$/;"	s
 work_array	miner.h	/^	int work_array;$/;"	m	struct:cgpu_info	typeref:typename:int
 work_block	cgminer.c	/^static unsigned int work_block;$/;"	v	typeref:typename:unsigned int	file:
 work_block	miner.h	/^	unsigned int	work_block;$/;"	m	struct:work	typeref:typename:unsigned int
+work_changed	driver-icarus.c	/^	bool work_changed;$/;"	m	struct:ICARUS_INFO	typeref:typename:bool	file:
+work_changed	miner.h	/^	bool work_changed;$/;"	m	struct:cgpu_info	typeref:typename:bool
 work_complete	driver-bflsc.c	/^	int work_complete;$/;"	m	struct:bflsc_dev	typeref:typename:int	file:
 work_completed	cgminer.c	/^void work_completed(struct cgpu_info *cgpu, struct work *work)$/;"	f	typeref:typename:void
 work_decode	cgminer.c	/^static bool work_decode(struct pool *pool, struct work *work, json_t *val)$/;"	f	typeref:typename:bool	file:
@@ -9514,6 +9546,7 @@ work_restart	miner.h	/^	bool	work_restart;$/;"	m	struct:thr_info	typeref:typenam
 work_rollable	cgminer.c	/^static bool work_rollable(struct work *work)$/;"	f	typeref:typename:bool	file:
 work_running	miner.h	/^	bool work_running;$/;"	m	struct:modminer_fpga_state	typeref:typename:bool
 work_size	miner.h	/^	size_t work_size;$/;"	m	struct:cgpu_info	typeref:typename:size_t
+work_start	driver-icarus.c	/^	struct timeval work_start;$/;"	m	struct:ICARUS_INFO	typeref:struct:timeval	file:
 work_start_tv	miner.h	/^	struct timeval work_start_tv;$/;"	m	struct:cgpu_info	typeref:struct:timeval
 working_diff	miner.h	/^	double working_diff;$/;"	m	struct:device_drv	typeref:typename:double
 workpadding	cgminer.c	/^static char *workpadding = "00000080000000000000000000000000000000000000000000000000000000000000/;"	v	typeref:typename:char *	file:

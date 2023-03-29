@@ -455,6 +455,15 @@ struct cgpu_info {
 	int queued;
 	int results;
 #endif
+
+#if defined(USE_ICARUS) 
+	bool work_changed;
+	bool result_is_nonce;
+	bool result_is_counter;
+	bool result_is_estimate;
+
+#endif
+
 #ifdef USE_USBUTILS
 	struct cg_usb_info usbinfo;
 #endif

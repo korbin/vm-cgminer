@@ -1922,6 +1922,7 @@ static int total_staged(void)
 #ifdef HAVE_CURSES
 WINDOW *mainwin, *statuswin, *logwin;
 #endif
+
 double total_secs = 1.0;
 static char statusline[256];
 /* logstart is where the log window should start */
@@ -2129,7 +2130,13 @@ static void curses_print_devstatus(int thr_id)
 	cgpu->drv->get_statline_before(logline, cgpu);
 	wprintw(statuswin, "%s", logline);
 
-	dh64 = (double)cgpu->total_mhashes / total_secs * 1000000ull;
+	struct timeval temp_tv_end, total_diff;
+	cgtime(&temp_tv_end);
+	timersub(&temp_tv_end, &total_tv_start, &total_diff);
+	double temp_total_secs = (double)total_diff.tv_sec +
+		((double)total_diff.tv_usec / 1000000.0);
+
+    dh64 = (double)cgpu->total_mhashes / temp_total_secs * 1000000ull;
 	dr64 = (double)cgpu->rolling * 1000000ull;
     suffix_string(dh64, displayed_hashes, 4);
 	suffix_string(dr64, displayed_rolling, 4);
@@ -2152,7 +2159,18 @@ static void curses_print_devstatus(int thr_id)
       err = (((float)cgpu->hw_errors / (float)nonce_found[cgpu->device_id]) * 100);
 
   //wprintw(statuswin, "%6sh/s | %dMHz | %.0f %.0f %.0f %.0fC | %d %d %d %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
-  wprintw(statuswin, "%6sh/s | %dMHz | %.1fC | %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
+  //Tyler Edit debug
+  wprintw(statuswin, "%6sh/s | %f total secs | %f thread hashes | %lf total hashes | R:%*d S:%d HW:%*d [%.2f%]",
+    displayed_hashes,
+	temp_total_secs,	
+	cgpu->total_mhashes,
+ 	total_mhashes_done,
+    awidth, cgpu->accepted,
+    rwidth, cgpu->rejected,
+    nonce_found[cgpu->device_id],
+    hwwidth, cgpu->hw_errors,
+    err);
+  /*wprintw(statuswin, "%6sh/s | %dMHz | %.1fC | %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
     displayed_hashes,
     fpga_freq[cgpu->device_id],	
 	//fpga_temp_3[cgpu->device_id],
@@ -2168,7 +2186,8 @@ static void curses_print_devstatus(int thr_id)
     nonce_found[cgpu->device_id],
     hwwidth, cgpu->hw_errors,
     err);
-	// *** /DM/ ***
+*/
+ 	// *** /DM/ ***
 
 	logline[0] = '\0';
 	cgpu->drv->get_statline(logline, cgpu);
@@ -5177,6 +5196,7 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	struct thr_info *thr;
 	// *** deke ***
 	float err, err2;
+	struct cgpu_info *cgpu=NULL;
 	// *** /DM/ ***
 
 	local_mhashes = (double)hashes_done / 1000000.0;
@@ -5191,7 +5211,8 @@ static void hashmeter(int thr_id, struct timeval *diff,
 
 	/* So we can call hashmeter from a non worker thread */
 	if (thr_id >= 0) {
-		struct cgpu_info *cgpu = thr->cgpu;
+		cgpu = thr->cgpu;
+
 		double thread_rolling = 0.0;
 		int i;
 
@@ -5244,18 +5265,19 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	showlog = true;
 	cgtime(&total_tv_end);
 
-	local_secs = (double)total_diff.tv_sec + ((double)total_diff.tv_usec / 1000000.0);
-	decay_time(&rolling, local_mhashes_done / local_secs);
-	global_hashrate = roundl(rolling) * 1000000;
-
 	timersub(&total_tv_end, &total_tv_start, &total_diff);
 	total_secs = (double)total_diff.tv_sec +
 		((double)total_diff.tv_usec / 1000000.0);
+
+	local_secs = (double)total_diff.tv_sec + ((double)total_diff.tv_usec / 1000000.0);
+	decay_time(&rolling, local_mhashes_done / local_secs);
+	global_hashrate = roundl(rolling) * 1000000;
 
 	utility = total_accepted / total_secs * 60;
 
 	dh64 = (double)total_mhashes_done / total_secs * 1000000ull;
 	dr64 = (double)rolling * 1000000ull;
+
 	suffix_string(dh64, displayed_hashes, 4);
 	suffix_string(dr64, displayed_rolling, 4);
 
@@ -6194,6 +6216,7 @@ static void hash_sole_work(struct thr_info *mythr)
 	struct cgpu_info *cgpu = mythr->cgpu;
 	struct device_drv *drv = cgpu->drv;
 	struct timeval getwork_start, tv_start, *tv_end, tv_workstart, tv_lastupdate;
+	
 	struct cgminer_stats *dev_stats = &(cgpu->cgminer_stats);
 	struct cgminer_stats *pool_stats;
 	/* Try to cycle approximately 5 times before each log update */
@@ -6207,9 +6230,10 @@ static void hash_sole_work(struct thr_info *mythr)
 	cgtime(&getwork_start);
 	sdiff.tv_sec = sdiff.tv_usec = 0;
 	cgtime(&tv_lastupdate);
-
+	
 	while (42) {
 		struct work *work = get_work(mythr, thr_id);
+
 		int64_t hashes;
 
 		mythr->work_restart = false;
@@ -6270,7 +6294,10 @@ static void hash_sole_work(struct thr_info *mythr)
 			cgtime(&(work->tv_work_start));
 
 			thread_reportin(mythr);
+
 			hashes = drv->scanhash(mythr, work, work->blk.nonce + max_nonce);
+
+//			applog(LOG_WARNING, "returned with 0x%08x hashes", hashes);
 			thread_reportin(mythr);
 
 			/* tv_end is == &getwork_start */
@@ -6284,10 +6311,10 @@ static void hash_sole_work(struct thr_info *mythr)
 			}
 
 			hashes_done += hashes;
+
 			if (hashes > cgpu->max_hashes)
 				cgpu->max_hashes = hashes;
 
-			timersub(tv_end, &tv_start, &diff);
 			sdiff.tv_sec += diff.tv_sec;
 			sdiff.tv_usec += diff.tv_usec;
 			if (sdiff.tv_usec > 1000000) {
@@ -6297,12 +6324,13 @@ static void hash_sole_work(struct thr_info *mythr)
 
 			timersub(tv_end, &tv_workstart, &wdiff);
 
-			if (unlikely((long)sdiff.tv_sec < cycle)) {
+		if (unlikely((long)sdiff.tv_sec < cycle)) {
 				int mult;
 
 				if (likely(max_nonce == 0xffffffff))
+				{
 					continue;
-
+				}
 				mult = 1000000 / ((sdiff.tv_usec + 0x400) / 0x400) + 0x10;
 				mult *= cycle;
 				if (max_nonce > (0xffffffff * 0x400) / mult)
@@ -6314,9 +6342,11 @@ static void hash_sole_work(struct thr_info *mythr)
 			else if (unlikely(sdiff.tv_usec > 100000))
 				max_nonce = max_nonce * 0x400 / (((cycle * 1000000) + sdiff.tv_usec) / (cycle * 1000000 / 0x400));
 
+
 			timersub(tv_end, &tv_lastupdate, &diff);
 			/* Update the hashmeter at most 5 times per second */
 			if (diff.tv_sec > 0 || diff.tv_usec > 200) {
+//				applog(LOG_WARNING, "Hash time: %u:%u, hash count: %u, device_id: %u, total_mhashes: %f, total_secs: %f", diff.tv_sec, diff.tv_usec, hashes_done, cgpu->device_id, cgpu->total_mhashes, cgpu->prev_meter_totalsecs);			
 				hashmeter(thr_id, &diff, hashes_done);
 				hashes_done = 0;
 				copy_time(&tv_lastupdate, tv_end);

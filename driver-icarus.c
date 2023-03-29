@@ -169,6 +169,22 @@ static const char *MODE_LONG_STR = "long";
 static const char *MODE_VALUE_STR = "value";
 static const char *MODE_UNKNOWN_STR = "unknown";
 
+// Tyler Edit
+#define CORE_MASK 0x1FFFFFFF // 8 core version, hardcoded as requested
+#define MAX_CORES 8
+#define MAX_CORE_HISTORY_SAMPLES 10
+#define HASHRATE_AVG_OVER_SECS 5
+
+struct CORE_HISTORY_SAMPLE {
+	struct timeval sample_time;
+	uint32_t hashrate;
+};
+
+struct CORE_HISTORY {
+	struct CORE_HISTORY_SAMPLE samples[MAX_CORE_HISTORY_SAMPLES];
+};
+//
+
 struct ICARUS_INFO {
 	// time to calculate the golden_ob
 	uint64_t golden_hashes;
@@ -200,6 +216,20 @@ struct ICARUS_INFO {
 	int work_division;
 	int fpga_count;
 	uint32_t nonce_mask;
+	
+	//Tyler Edit
+	bool work_changed;
+	bool first_timeout;
+	uint16_t enabled_cores;
+	int active_core_count;
+	struct timeval work_start;
+	struct timeval last_interval_timeout;
+	struct timeval prev_hashcount_return;
+	uint32_t prev_hashrate;
+	uint32_t prev_hashcount;
+	uint8_t expected_cores;
+	struct CORE_HISTORY core_history[MAX_CORES];
+	//
 };
 
 #define END_CONDITION 0x0000ffff
@@ -714,7 +744,7 @@ static bool icarus_detect_one(const char *devpath)
 		"00000000000000000000000000000000"
 		"000000000000000000000000";
 
-	const char golden_nonce[] = "0000000000000000000000000000000000";
+	const char golden_nonce[] = "bb00000000000000000000000001ffffff";
 	const uint32_t golden_nonce_val = 0x00000000;	
 	
 	unsigned char ob_bin[76], nonce_bin[ICARUS_READ_SIZE];
@@ -856,6 +886,12 @@ static bool icarus_detect_one(const char *devpath)
 	info->work_division = work_division;
 	info->fpga_count = fpga_count;
 	info->nonce_mask = mask(work_division);
+	info->enabled_cores = 0;
+	info->active_core_count = 0;
+
+	memset(info->core_history, 0, sizeof(info->core_history));
+	info->expected_cores = 8;
+
 
 	info->golden_hashes = (golden_nonce_val & info->nonce_mask) * fpga_count;
 	timersub(&tv_finish, &tv_start, &(info->golden_tv));
@@ -893,6 +929,186 @@ static bool icarus_prepare(struct thr_info *thr)
 
 	return true;
 }
+
+// Tyler Edit
+void icarus_statline(char *logline, struct cgpu_info *cgpu)
+{
+	char str_active_cores[9];
+	struct ICARUS_INFO *info;
+	info = icarus_info[cgpu->device_id];
+
+	for (int i = 0; i < 8; i++)
+	{
+		if ((info->enabled_cores >> i) & 0x1)
+			str_active_cores[i] = '1';
+		else
+			str_active_cores[i] = '0';
+
+	}
+	str_active_cores[8] = 0;
+
+	sprintf(logline, ", %d Active Cores: %s", info->active_core_count, str_active_cores);
+
+}
+
+bool icarus_prepare_work(struct thr_info __maybe_unused *thr, struct work __maybe_unused *work)
+{
+	struct cgpu_info *icarus;
+	struct ICARUS_INFO *info;
+	icarus = thr->cgpu;
+	info = icarus_info[icarus->device_id];
+	info->work_changed = true;
+	info->first_timeout = true;
+	return true;
+}
+
+void disable_core(struct ICARUS_INFO *info, uint8_t core_num)
+{
+	// if already enabled, return
+	if (((info->enabled_cores >> core_num) & 0x1) == 0)
+		return;
+
+	info->active_core_count --; 
+
+	info->enabled_cores &= ~(0x1 << core_num);
+}
+
+void enable_core(struct ICARUS_INFO *info, uint8_t core_num)
+{
+	// if already enabled, return
+	if ((info->enabled_cores >> core_num) & 0x1)
+		return;
+
+	info->active_core_count ++;
+	info->enabled_cores |= 0x1 << core_num;
+}
+
+uint32_t new_hashcount_since_last_return(struct ICARUS_INFO *info, struct timeval *until)
+{
+	struct timeval elapsed;
+
+	timersub(until, &info->prev_hashcount_return, &elapsed);
+	copy_time(&info->prev_hashcount_return, until);
+	uint32_t device_hashcount_this_period = (double)info->prev_hashrate * ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
+
+	info->prev_hashcount += device_hashcount_this_period;
+
+	return device_hashcount_this_period;
+}
+
+void update_core_history(struct ICARUS_INFO *info, uint8_t core_num, struct timeval *sample_time, uint32_t hashrate)
+{
+	struct CORE_HISTORY *history = &info->core_history[core_num];
+	struct CORE_HISTORY_SAMPLE *window = &history->samples[1];
+	memcpy(window, history->samples, sizeof(history->samples)-sizeof(struct CORE_HISTORY_SAMPLE));
+	copy_time(&history->samples[0].sample_time, sample_time);
+	history->samples[0].hashrate = hashrate;
+}
+
+// 'from_time' is the time reference we are going to look from and go back 'seconds' to average over.
+uint32_t get_core_hashrate_average(struct ICARUS_INFO *info, uint8_t core_num, uint32_t seconds, struct timeval *from_time)
+{
+	uint64_t hashrate_sum = 0;
+	uint16_t sample_count = 0;
+	struct timeval elapsed;
+	struct CORE_HISTORY *history = &info->core_history[core_num];
+	struct CORE_HISTORY_SAMPLE *sample = history->samples;
+
+	for (int i=0; i < MAX_CORE_HISTORY_SAMPLES; ++i, ++sample)
+	{
+		if (sample->sample_time.tv_sec == 0 && sample->sample_time.tv_usec == 0)
+			break;
+
+		timersub(from_time, &sample->sample_time, &elapsed);
+		uint32_t time_ago = (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000);
+		if (time_ago > seconds)
+			break;
+
+		sample_count ++;
+		hashrate_sum += sample->hashrate;
+	}
+	if (sample_count == 0)
+		return 0;
+
+	return hashrate_sum / sample_count;
+}
+
+// 'from_time' is the time reference we are going to look from and go back 'seconds' to average over.
+uint32_t get_device_hashrate_average(struct ICARUS_INFO *info, uint32_t seconds, struct timeval *from_time)
+{
+	uint64_t hashrate_sum = 0;
+
+	for (int i=0; i < MAX_CORES; i ++)
+	{
+		uint32_t hashrate = get_core_hashrate_average(info, i, seconds, from_time);
+		if (hashrate != 0)
+		{
+			hashrate_sum += hashrate;
+			if ((info->enabled_cores >> i) & 0x1 == 0)
+				enable_core(info, i);
+		}
+		else
+			disable_core(info, i);
+	}
+	return hashrate_sum;
+}
+
+//
+// since_time - we use this time to look for activity from cores since then. If no activity
+// we will assume the core is inactive. This reference point should be when new work begins.
+// Since all cores report in with a counter, the next time we have a timeout we can assume they
+// all should have reported in. So, this function should only be called once per work.
+// sample_time - if a core goes inactive we need the time that we should add a 0 hashrate sample at
+//
+// return - whether an update occurred
+//
+bool update_active_core(struct ICARUS_INFO *info, struct timeval *since_time, uint16_t core_num, struct timeval *sample_time)
+{
+	struct CORE_HISTORY *history = &info->core_history[core_num];
+	struct CORE_HISTORY_SAMPLE *sample = history->samples;
+
+	// there has been a response since reference time so don't set inactive.
+	if (sample[0].sample_time.tv_sec > since_time->tv_sec)
+		return false;
+
+	// there has been a response since reference time so don't set inactive.
+	if ((sample[0].sample_time.tv_sec == since_time->tv_sec) && (sample[0].sample_time.tv_usec >  since_time->tv_usec))
+		return false;
+
+	// inactive since reference time
+	disable_core(info, core_num);
+	update_core_history(info, core_num, sample_time, 0);
+
+	return true;
+}
+
+//
+// since_time - we use this time to look for activity from cores since then. If no activity
+// we will assume the core is inactive. This reference point should be when new work begins.
+// Since all cores report in with a counter, the next time we have a timeout we can assume they
+// all should have reported in. So, this function should only be called once per work.
+// sample_time - if a core goes inactive we need the time that we should add a 0 hashrate sample at
+//
+// return - whether an update occurred
+//
+bool update_active_device(struct ICARUS_INFO *info, struct timeval *since_time, struct timeval *sample_time)
+{
+	bool updated = false;
+	for (int i=0; i < MAX_CORES; i ++)
+	{
+		if (update_active_core(info, since_time, i, sample_time))
+			updated = true;
+	}
+	if (updated)
+	{
+		uint32_t new_device_hashrate = get_device_hashrate_average(info, HASHRATE_AVG_OVER_SECS, sample_time);
+		info->prev_hashrate = new_device_hashrate;
+	}
+
+	return updated;
+}
+
+//
 
 // *** deke ***
 void sha512_midstate(unsigned char *input, unsigned char *output)
@@ -1068,6 +1284,12 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	elapsed.tv_sec = elapsed.tv_usec = 0;
 
 	icarus = thr->cgpu;
+	// Tyler Edit
+	icarus->result_is_nonce = false;
+	icarus->result_is_counter = false;
+	icarus->result_is_estimate = false;
+	//
+
 	if (icarus->device_fd == -1)
 		if (!icarus_prepare(thr)) {
 			applog(LOG_ERR, "%s%i: Comms error", icarus->drv->name, icarus->device_id);
@@ -1127,15 +1349,27 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 #ifndef WIN32
 	tcflush(fd, TCOFLUSH);
 #endif
-	ret = icarus_write(fd, ob_bin, sizeof(ob_bin));
-	if (ret) {
-		do_icarus_close(thr);
-		applog(LOG_ERR, "%s%i: Comms error", icarus->drv->name, icarus->device_id);
-		dev_error(icarus, REASON_DEV_COMMS_ERROR);
-		return 0;	/* This should never happen */
+	//Tyler Edit
+	info = icarus_info[icarus->device_id];
+	if (info->work_changed)
+	{
+		info->work_changed = false;
+	//
+		ret = icarus_write(fd, ob_bin, sizeof(ob_bin));
+	
+		if (ret) {
+			do_icarus_close(thr);
+			applog(LOG_ERR, "%s%i: Comms error", icarus->drv->name, icarus->device_id);
+			dev_error(icarus, REASON_DEV_COMMS_ERROR);
+			return 0;	/* This should never happen */
+		}
+		cgtime(&tv_start);
+		copy_time(&info->work_start, &tv_start);
+		copy_time(&info->prev_hashcount_return, &tv_start);
+		info->prev_hashcount = 0;
 	}
-
-	cgtime(&tv_start);
+	else
+		cgtime(&tv_start);
 
 	if (opt_debug) {
 		ob_hex = bin2hex(ob_bin, sizeof(ob_bin));
@@ -1146,19 +1380,72 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	/* Icarus will return 4 bytes (ICARUS_READ_SIZE) nonces or nothing */
 	memset(nonce_bin, 0, sizeof(nonce_bin));
-	info = icarus_info[icarus->device_id];
 	ret = icarus_gets(nonce_bin, fd, &tv_finish, thr, info->read_count);
+	
+	if (!ret)
+	{
+	//Tyler Edit
+		char result_nonce_str[17*3+1];
+		for (int i=0; i<17; i++)
+		{
+			sprintf(result_nonce_str+i*3, "%02X ", nonce_bin[i]);	
+		}
+		result_nonce_str[17*3] = 0;
+		applog(LOG_WARNING, "Received nonce_result: %s", result_nonce_str);
+	}
+	//
+
 	if (ret == ICA_GETS_ERROR) {
 		do_icarus_close(thr);
 		applog(LOG_ERR, "%s%i: Comms error", icarus->drv->name, icarus->device_id);
 		dev_error(icarus, REASON_DEV_COMMS_ERROR);
+
 		return 0;
 	}
 
-	work->blk.nonce = 0xffffffff;
+	// Tyler Edit
+	// This was for the Icarus board. For VCU/BCU/FK33 we decided to return to avoid
+	// time that might be on stale work, etc.
+	//work->blk.nonce = 0xffffffff;
+	//
 
 	// aborted before becoming idle, get new work
 	if (ret == ICA_GETS_TIMEOUT || ret == ICA_GETS_RESTART) {
+		// Tyler Edit
+		if (info->first_timeout)
+		{
+			update_active_device(info, &info->work_start, &tv_finish);
+			info->first_timeout = false;
+			copy_time(&info->last_interval_timeout, &tv_finish);
+		}
+		else
+		{
+			timersub(&tv_finish, &info->work_start, &elapsed);
+			double seconds = (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000); 
+
+			if (seconds > HASHRATE_AVG_OVER_SECS)
+			{
+				update_active_device(info, &info->last_interval_timeout, &tv_finish);
+				copy_time(&info->last_interval_timeout, &tv_finish);
+			}
+		}
+		timersub(&tv_finish, &info->prev_hashcount_return, &elapsed);
+		uint32_t hash_count = info->prev_hashrate * ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
+		icarus->result_is_estimate = true;
+
+		info->prev_hashcount += hash_count;
+		// if we are close to the end of all nonces, then get new work
+		if (info->prev_hashcount > 0xffffffff*0.75)
+		{
+			applog(LOG_ERR, "Forcing abandon_work to avoid idle FPGA. Previous hashrate: %u, Elapsed time: %f, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount);
+			work->blk.nonce = 0xffffffff;
+		}
+
+		copy_time(&info->prev_hashcount_return, &tv_finish);
+		applog(LOG_ERR, "Timeout: Previous hashrate: %u, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
+
+		return hash_count;
+		//
 		timersub(&tv_finish, &tv_start, &elapsed);
 
 		// ONLY up to just when it aborted
@@ -1176,14 +1463,27 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 					icarus->device_id, (long unsigned int)estimate_hashes,
 					elapsed.tv_sec, elapsed.tv_usec);
 		}
-
-		return estimate_hashes;
+	
+		 return estimate_hashes;
 	}
 	
 	// *** deke ***
 	unsigned int volt_raw, temp_raw;	
 	
-	if ((nonce_bin[0] == 0x01) && !nonce_bin[1] && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8] && !nonce_bin[9] && !nonce_bin[10] && !nonce_bin[11] && !nonce_bin[12])
+	//Tyler edit
+	if ((nonce_bin[0] == 0xbb) && !nonce_bin[1] && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8] && !nonce_bin[9] && !nonce_bin[10] && !nonce_bin[11] && !nonce_bin[12])
+	{
+		// nonce
+		nonce_tmp[0] = nonce_bin[13];
+		nonce_tmp[1] = nonce_bin[14];
+		nonce_tmp[2] = nonce_bin[15];
+		nonce_tmp[3] = nonce_bin[16];
+		
+		memcpy((char *)&nonce, nonce_tmp, sizeof(nonce_tmp));
+		icarus->result_is_counter = true;
+	}
+	//
+	else if ((nonce_bin[0] == 0x01) && !nonce_bin[1] && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8] && !nonce_bin[9] && !nonce_bin[10] && !nonce_bin[11] && !nonce_bin[12])
 	{
 		// nonce
 		nonce_tmp[0] = nonce_bin[13];
@@ -1247,11 +1547,30 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		else
 			fpga_temp_3[icarus->device_id] = 0;
 		
+		// Tyler Edit
+		timersub(&tv_finish, &info->prev_hashcount_return, &elapsed);
+
+		uint32_t hash_count = info->prev_hashrate * ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
+		icarus->result_is_estimate = true;
+
+		info->prev_hashcount += hash_count;
+		// if we are close to the end of all nonces, then get new work
+		if (info->prev_hashcount > 0xffffffff*0.75)
+		{
+			applog(LOG_ERR, "Forcing abandon_work to avoid idle FPGA. Previous hashrate: %u, Elapsed time: %f, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount);
+			work->blk.nonce = 0xffffffff;
+		}
+
+		copy_time(&info->prev_hashcount_return, &tv_finish);
+
+		return hash_count;
+		//
 		return 0;
 	}		
 	//else if (nonce_bin[0] == 0xbb)
 	else
 	{
+		applog(LOG_ERR, "Unknown message from FPGA.");
 		return 0;
 	}
 	// *** /DM/ ***
@@ -1264,22 +1583,57 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	//nonce_d = swab32(nonce);
 	//applog(LOG_WARNING, "VCU1525 %d: Nonce found %08x", icarus->device_id, nonce_d);
 	nonce_d = (nonce >> 29) + 1;
+
+	// Tyler Edit
+	// if not enabled
+	if ((info->enabled_cores >> (nonce_d-1)) ^ 0x1)
+		enable_core(info, nonce_d-1);
+
+	//applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d] Job ID: %s, Nonce1: %s, Nonce2: %s, Hs: %f", icarus->device_id, nonce, nonce_d, work->job_id, work->nonce1, work->nonce2, info->Hs);
+	//
+	
 	applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d]", icarus->device_id, nonce, nonce_d);
 	nonce_found[icarus->device_id]++;
 	nonce_counter++;
 	// *** /DM/ ***
 
 	curr_hw_errors = icarus->hw_errors;
-	submit_nonce(thr, work, nonce);
+	// Tyler Edit
+	if (!icarus->result_is_counter)
+	//
+		submit_nonce(thr, work, nonce);
 	was_hw_error = (curr_hw_errors > icarus->hw_errors);
 
 	// Force a USB close/reopen on any hw error
 	if (was_hw_error)
 		do_icarus_close(thr);
 
-	hash_count = (nonce & info->nonce_mask);
+	// Tyler Edit
+	//hash_count = (nonce & info->nonce_mask);
+	//hash_count++;
+	//hash_count *= info->fpga_count;
+	hash_count = (nonce & CORE_MASK); //info->nonce_mask);
 	hash_count++;
-	hash_count *= info->fpga_count;
+
+	timersub(&tv_finish, &info->work_start, &elapsed);
+
+	// Calculate the core hashrate based on its progress since work was assigned
+	uint32_t core_hashrate = (double)hash_count / ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
+
+	update_core_history(info, nonce_d-1, &tv_finish, core_hashrate);
+
+	// device hashrate
+	// Store this so we can calculate hash_count on future returns when we have no nonce or counter; timeouts and voltage reports.
+	uint32_t new_device_hashrate = get_device_hashrate_average(info, HASHRATE_AVG_OVER_SECS, &tv_finish);
+
+	info->prev_hashrate = new_device_hashrate;
+
+	hash_count = new_hashcount_since_last_return(info, &tv_finish);
+
+	applog(LOG_ERR, "Core update: Previous hashrate: %u, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
+
+	// applog(LOG_WARNING, "Hashrate updated to: %u", info->prev_hashrate);
+	//
 
 	if (opt_debug || info->do_icarus_timing)
 		timersub(&tv_finish, &tv_start, &elapsed);
@@ -1365,6 +1719,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			read_count = (int)(fullnonce * TIME_FACTOR) - 1;
 
 			info->Hs = Hs;
+			applog(LOG_WARNING, "updated estimated hash rate to: %f", Hs);
 			info->read_count = read_count;
 
 			info->fullnonce = fullnonce;
@@ -1388,6 +1743,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		timersub(&tv_history_finish, &tv_history_start, &tv_history_finish);
 		timeradd(&tv_history_finish, &(info->history_time), &(info->history_time));
 	}
+	// Tyler Edit
+	icarus->result_is_nonce = true;
+	//
 
 	return hash_count;
 }
@@ -1435,5 +1793,7 @@ struct device_drv icarus_drv = {
 	.thread_prepare = icarus_prepare,
 	.scanhash = icarus_scanhash,
 	.thread_shutdown = icarus_shutdown,
+	.get_statline = icarus_statline,
+	.prepare_work = icarus_prepare_work,
 };
 // *** /DM/ ***
