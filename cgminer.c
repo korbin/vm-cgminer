@@ -5262,12 +5262,13 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	/* Only update with opt_log_interval */
 	if (total_diff.tv_sec < opt_log_interval)
 		goto out_unlock;
-	showlog = true;
-	cgtime(&total_tv_end);
 
 	timersub(&total_tv_end, &total_tv_start, &total_diff);
 	total_secs = (double)total_diff.tv_sec +
 		((double)total_diff.tv_usec / 1000000.0);
+
+	showlog = true;
+	cgtime(&total_tv_end);
 
 	local_secs = (double)total_diff.tv_sec + ((double)total_diff.tv_usec / 1000000.0);
 	decay_time(&rolling, local_mhashes_done / local_secs);
