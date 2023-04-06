@@ -2160,7 +2160,7 @@ static void curses_print_devstatus(int thr_id)
 
   //wprintw(statuswin, "%6sh/s | %dMHz | %.0f %.0f %.0f %.0fC | %d %d %d %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
   //Tyler Edit debug
-  wprintw(statuswin, "%6sh/s | %f total secs | %f thread hashes | %lf total hashes | R:%*d S:%d HW:%*d [%.2f%]",
+/*  wprintw(statuswin, "%6sh/s | %f total secs | %f thread hashes | %lf total hashes | R:%*d S:%d HW:%*d [%.2f%]",
     displayed_hashes,
 	temp_total_secs,	
 	cgpu->total_mhashes,
@@ -2170,7 +2170,8 @@ static void curses_print_devstatus(int thr_id)
     nonce_found[cgpu->device_id],
     hwwidth, cgpu->hw_errors,
     err);
-  /*wprintw(statuswin, "%6sh/s | %dMHz | %.1fC | %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
+    */
+  wprintw(statuswin, "%6sh/s | %dMHz | %.1fC | %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
     displayed_hashes,
     fpga_freq[cgpu->device_id],	
 	//fpga_temp_3[cgpu->device_id],
@@ -2186,7 +2187,7 @@ static void curses_print_devstatus(int thr_id)
     nonce_found[cgpu->device_id],
     hwwidth, cgpu->hw_errors,
     err);
-*/
+
  	// *** /DM/ ***
 
 	logline[0] = '\0';
@@ -5263,16 +5264,16 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	if (total_diff.tv_sec < opt_log_interval)
 		goto out_unlock;
 
-	timersub(&total_tv_end, &total_tv_start, &total_diff);
-	total_secs = (double)total_diff.tv_sec +
-		((double)total_diff.tv_usec / 1000000.0);
-
 	showlog = true;
 	cgtime(&total_tv_end);
 
 	local_secs = (double)total_diff.tv_sec + ((double)total_diff.tv_usec / 1000000.0);
 	decay_time(&rolling, local_mhashes_done / local_secs);
 	global_hashrate = roundl(rolling) * 1000000;
+
+	timersub(&total_tv_end, &total_tv_start, &total_diff);
+	total_secs = (double)total_diff.tv_sec +
+		((double)total_diff.tv_usec / 1000000.0);
 
 	utility = total_accepted / total_secs * 60;
 

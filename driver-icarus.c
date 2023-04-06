@@ -1355,6 +1355,14 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	{
 		info->work_changed = false;
 	//
+/*		        char input_str[(sizeof(work->data))*2+1];                                                
+			for (int i=0; i<sizeof(work->data); i++)                                           
+			{                                                                  
+				sprintf(input_str+i*2, "%02X", work->data[i]);
+			}	       
+			input_str[sizeof(work->data)*2] = 0;                                       
+			applog(LOG_WARNING, "Writing input vector to FPGA: %s", input_str);
+*/
 		ret = icarus_write(fd, ob_bin, sizeof(ob_bin));
 	
 		if (ret) {
@@ -1385,6 +1393,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	if (!ret)
 	{
 	//Tyler Edit
+		/*
 		char result_nonce_str[17*3+1];
 		for (int i=0; i<17; i++)
 		{
@@ -1392,6 +1401,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		}
 		result_nonce_str[17*3] = 0;
 		applog(LOG_WARNING, "Received nonce_result: %s", result_nonce_str);
+		*/
 	}
 	//
 
@@ -1442,7 +1452,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		}
 
 		copy_time(&info->prev_hashcount_return, &tv_finish);
-		applog(LOG_ERR, "Timeout: Previous hashrate: %u, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
+//		applog(LOG_ERR, "Timeout: Previous hashrate: %u, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
 
 		return hash_count;
 		//
@@ -1592,7 +1602,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	//applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d] Job ID: %s, Nonce1: %s, Nonce2: %s, Hs: %f", icarus->device_id, nonce, nonce_d, work->job_id, work->nonce1, work->nonce2, info->Hs);
 	//
 	
-	applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d]", icarus->device_id, nonce, nonce_d);
+//	applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d]", icarus->device_id, nonce, nonce_d);
 	nonce_found[icarus->device_id]++;
 	nonce_counter++;
 	// *** /DM/ ***
@@ -1630,7 +1640,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	hash_count = new_hashcount_since_last_return(info, &tv_finish);
 
-	applog(LOG_ERR, "Core update: Previous hashrate: %u, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
+//	applog(LOG_ERR, "Core update: Previous hashrate: %u, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
 
 	// applog(LOG_WARNING, "Hashrate updated to: %u", info->prev_hashrate);
 	//
