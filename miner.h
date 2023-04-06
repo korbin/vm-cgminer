@@ -210,7 +210,7 @@ static inline int fsync (int fd)
 #define MAX(x, y)	((x) > (y) ? (x) : (y))
 
 // *** deke ***
-#define deke_VERSION "10"
+#define deke_VERSION "1"
 #define MAX_FPGA 50
 
 extern unsigned int fpga_freq[MAX_FPGA];
@@ -1063,6 +1063,7 @@ struct stratum_work {
 	size_t cb_len;
 
 	size_t header_len;
+	char header[361];
 	int merkles;
 	double diff;
 };
@@ -1183,7 +1184,7 @@ struct pool {
 #define GETWORK_MODE_GBT 'G'
 
 struct work {
-	unsigned char	data[128];
+	unsigned char	data[180];
 	unsigned char	midstate[32];
 	unsigned char	target[32];
 	unsigned char	hash[32];
@@ -1219,6 +1220,7 @@ struct work {
 	char		*ntime;
 	double		sdiff;
 	char		*nonce1;
+	uint64_t 	res_nonce;
 
 	bool		gbt;
 	char		*gbt_coinbase;
@@ -1273,7 +1275,7 @@ struct modminer_fpga_state {
 
 extern void get_datestamp(char *, struct timeval *);
 extern void inc_hw_errors(struct thr_info *thr);
-extern void submit_nonce(struct thr_info *thr, struct work *work, uint32_t nonce);
+extern void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce);
 extern struct work *get_queued(struct cgpu_info *cgpu);
 extern struct work *__find_work_bymidstate(struct work *que, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen);
 extern struct work *find_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen);

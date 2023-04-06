@@ -39,6 +39,7 @@
 #include <curl/curl.h>
 #include <libgen.h>
 #include <sha2.h>
+#include "blake3/blake3.h"
 
 #include "compat.h"
 #include "miner.h"
@@ -2067,7 +2068,7 @@ static void curses_print_status(void)
 	// *** deke ***
 	wattron(statuswin, A_REVERSE);		
 	mvwhline(statuswin, 0, 0, ' ', 100);	
-	mvwprintw(statuswin, 1, 0, " " PACKAGE " version " VERSION "."deke_VERSION" [radiantcoin] by deke - Started: %s                ", datestamp); 
+	mvwprintw(statuswin, 1, 0, " " PACKAGE " version " VERSION "."deke_VERSION" [Iron Fish] by deke - Started: %s                ", datestamp); 
 	mvwhline(statuswin, 2, 0, ' ', 100);	
 	wattroff(statuswin, A_REVERSE);	
 	mvwprintw(statuswin, 3, 0, " %s", statusline);
@@ -2160,7 +2161,7 @@ static void curses_print_devstatus(int thr_id)
 
   //wprintw(statuswin, "%6sh/s | %dMHz | %.0f %.0f %.0f %.0fC | %d %d %d %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
   //Tyler Edit debug
-  wprintw(statuswin, "%6sh/s | %f total secs | %f thread hashes | %lf total hashes | R:%*d S:%d HW:%*d [%.2f%]",
+/*  wprintw(statuswin, "%6sh/s | %f total secs | %f thread hashes | %lf total hashes | R:%*d S:%d HW:%*d [%.2f%]",
     displayed_hashes,
 	temp_total_secs,	
 	cgpu->total_mhashes,
@@ -2170,7 +2171,8 @@ static void curses_print_devstatus(int thr_id)
     nonce_found[cgpu->device_id],
     hwwidth, cgpu->hw_errors,
     err);
-  /*wprintw(statuswin, "%6sh/s | %dMHz | %.1fC | %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
+    */
+  wprintw(statuswin, "%6sh/s | %dMHz | %.1fC | %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
     displayed_hashes,
     fpga_freq[cgpu->device_id],	
 	//fpga_temp_3[cgpu->device_id],
@@ -2186,7 +2188,7 @@ static void curses_print_devstatus(int thr_id)
     nonce_found[cgpu->device_id],
     hwwidth, cgpu->hw_errors,
     err);
-*/
+
  	// *** /DM/ ***
 
 	logline[0] = '\0';
@@ -3771,7 +3773,47 @@ static void regen_hash(struct work *work)
 	unsigned char i;	
 	unsigned char inp[80];		
 	unsigned char hash2[32];	
+	unsigned char buf[180];
 
+	memcpy(buf, work->data, 180);
+	memcpy(buf, &work->res_nonce, sizeof(work->res_nonce));
+	blake3_hasher hasher;
+	blake3_hasher_init(&hasher);
+	blake3_hasher_update(&hasher, buf, 180);
+	// Finalize the hash. BLAKE3_OUT_LEN is the default output length, 32 bytes.
+	uint8_t output[BLAKE3_OUT_LEN];
+	blake3_hasher_finalize(&hasher, output, BLAKE3_OUT_LEN);
+	memcpy(work->hash, output, 32);
+
+	/*
+	
+	char input_str[180*3+1];
+	for (int i=0; i<180; i++)
+	{
+		sprintf(input_str+i*3, "%02X ", buf[i]);	
+	}
+	input_str[180*3] = 0;
+	applog(LOG_WARNING, "For input: %s", input_str);
+	char nonce_str[8*3+1];
+	for (int i=0; i<8; i++)
+	{
+		sprintf(nonce_str+i*3, "%02X ", buf[i]);	
+	}
+	nonce_str[8*3] = 0;
+	applog(LOG_WARNING, "For nonce result: %s", nonce_str);
+	char result_hash_str[32*3+1];
+	for (int i=0; i<32; i++)
+	{
+		sprintf(result_hash_str+i*3, "%02X ", work->hash[i]);	
+	}
+	result_hash_str[32*3] = 0;
+	applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
+*/
+	return;
+	
+	/*
+	 * used with radiant coin
+	 *
 	for (i = 0; i < 80; i+=4){
 		inp[i+0] = work->data[i+3];
 		inp[i+1] = work->data[i+2];
@@ -3783,7 +3825,7 @@ static void regen_hash(struct work *work)
 	sha512_256_32(&hash1[0], &hash2[0]);
 
 	memcpy(work->hash, hash2, 32);
-
+	*/
 #if 0
 	char *datastr = bin2hex(work->data, 80);
 	char *hashstr = bin2hex(work->hash, 32);		
@@ -3807,6 +3849,7 @@ static void rebuild_hash(struct work *work)
 	
 	applog(LOG_WARNING, "hash %s", hashstr);
 #endif
+	
 
 	work->share_diff = share_diff(work);
 	if (unlikely(work->share_diff >= current_diff)) {
@@ -3856,7 +3899,8 @@ static void *submit_work_thread(void *userdata)
 
 	if (work->stratum) {
 		struct stratum_share *sshare = calloc(sizeof(struct stratum_share), 1);
-		uint32_t *hash32 = (uint32_t *)work->hash, nonce;
+		uint32_t *hash32 = (uint32_t *)work->hash;
+		uint64_t nonce;
 		bool submitted = false;
 		char *noncehex;
 		char s[1024];
@@ -3864,8 +3908,8 @@ static void *submit_work_thread(void *userdata)
 		sshare->sshare_time = time(NULL);
 		/* This work item is freed in parse_stratum_response */
 		sshare->work = work;
-		nonce = *((uint32_t *)(work->data + 76));
-		noncehex = bin2hex((const unsigned char *)&nonce, 4);
+		nonce = work->res_nonce;
+		noncehex = bin2hex((const unsigned char *)&nonce, 8);
 		memset(s, 0, 1024);
 
 		mutex_lock(&sshare_lock);
@@ -3873,8 +3917,8 @@ static void *submit_work_thread(void *userdata)
 		sshare->id = swork_id++;
 		mutex_unlock(&sshare_lock);
 
-		sprintf(s, "{\"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.submit\"}",
-			pool->rpc_user, work->job_id, work->nonce2, work->ntime, noncehex, sshare->id);
+		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\"}, \"id\": %d, \"method\": \"mining.submit\"}",
+			work->job_id, noncehex, sshare->id);
 		free(noncehex);
 
 		applog(LOG_INFO, "Submitting share %08lx to pool %d",
@@ -5263,16 +5307,16 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	if (total_diff.tv_sec < opt_log_interval)
 		goto out_unlock;
 
-	timersub(&total_tv_end, &total_tv_start, &total_diff);
-	total_secs = (double)total_diff.tv_sec +
-		((double)total_diff.tv_usec / 1000000.0);
-
 	showlog = true;
 	cgtime(&total_tv_end);
 
 	local_secs = (double)total_diff.tv_sec + ((double)total_diff.tv_usec / 1000000.0);
 	decay_time(&rolling, local_mhashes_done / local_secs);
 	global_hashrate = roundl(rolling) * 1000000;
+
+	timersub(&total_tv_end, &total_tv_start, &total_diff);
+	total_secs = (double)total_diff.tv_sec +
+		((double)total_diff.tv_usec / 1000000.0);
 
 	utility = total_accepted / total_secs * 60;
 
@@ -5307,7 +5351,8 @@ out_unlock:
 		if (!curses_active) {
 			printf("%s          \r", statusline);
 			fflush(stdout);
-		} else
+		} 
+		else
 			applog(LOG_INFO, "%s", statusline);
 	}
 }
@@ -5333,7 +5378,7 @@ static void stratum_share_result(json_t *val, json_t *res_val, json_t *err_val,
  * matched to and treat it accordingly. */
 static bool parse_stratum_response(struct pool *pool, char *s)
 {
-	json_t *val = NULL, *err_val, *res_val, *id_val;
+	json_t *val = NULL, *method_val, *params, *err_val, *res_val, *id_val;
 	struct stratum_share *sshare;
 	json_error_t err;
 	bool ret = false;
@@ -5344,10 +5389,21 @@ static bool parse_stratum_response(struct pool *pool, char *s)
 		applog(LOG_INFO, "JSON decode failed(%d): %s", err.line, err.text);
 		goto out;
 	}
+	method_val = json_object_get(val, "method");
+	const char *method_str = json_string_value(method_val);
+	if (!method_val || strcmp(method_str, "mining.submitted")) {
+		applog(LOG_INFO, "JSON unknown message");
+		goto out;
+	}
+	params = json_object_get(val, "body");
+	if (!params) {
+		applog(LOG_INFO, "JSON missing necessary parameters.");
+		goto out;
+	}
 
-	res_val = json_object_get(val, "result");
-	err_val = json_object_get(val, "error");
-	id_val = json_object_get(val, "id");
+	res_val = json_object_get(params, "result");
+	err_val = json_object_get(params, "error");
+	id_val = json_object_get(params, "id");
 
 	if (json_is_null(id_val) || !id_val) {
 		char *ss;
@@ -5667,7 +5723,7 @@ retry_stratum:
 		bool init = pool_tset(pool, &pool->stratum_init);
 
 		if (!init) {
-			bool ret = initiate_stratum(pool) && auth_stratum(pool);
+			bool ret = initiate_stratum(pool);
 
 			if (ret)
 				init_stratum_thread(pool);
@@ -5958,84 +6014,27 @@ void set_target(unsigned char *dest_target, double diff)
  * other means to detect when the pool has died in stratum_thread */
 static void gen_stratum_work(struct pool *pool, struct work *work)
 {
-	unsigned char *coinbase, merkle_root[32], merkle_sha[64];
-	char *header, *merkle_hash;
 	uint32_t *data32, *swap32;
-	size_t alloc_len;
 	int i;
 
 	/* Use intermediate lock to update the one pool variable */
 	cg_ilock(&pool->data_lock);
 
-	/* Generate coinbase */
-	work->nonce2 = bin2hex((const unsigned char *)&pool->nonce2, pool->n2size);
+	*(uint32_t *)work->data = htole32(pool->nonce2);
+	
 	pool->nonce2++;
-
 	/* Downgrade to a read lock to read off the pool variables */
 	cg_dlock(&pool->data_lock);
-	alloc_len = pool->swork.cb_len;
-	align_len(&alloc_len);
-	coinbase = calloc(alloc_len, 1);
-	if (unlikely(!coinbase))
-		quit(1, "Failed to calloc coinbase in gen_stratum_work");
-	hex2bin(coinbase, pool->swork.coinbase1, pool->swork.cb1_len);
-	hex2bin(coinbase + pool->swork.cb1_len, pool->nonce1, pool->n1_len);
-	hex2bin(coinbase + pool->swork.cb1_len + pool->n1_len, work->nonce2, pool->n2size);
-	hex2bin(coinbase + pool->swork.cb1_len + pool->n1_len + pool->n2size, pool->swork.coinbase2, pool->swork.cb2_len);
-
-	/* Generate merkle root */
-	gen_hash(coinbase, merkle_root, pool->swork.cb_len);
-	free(coinbase);
-	memcpy(merkle_sha, merkle_root, 32);
-	for (i = 0; i < pool->swork.merkles; i++) {
-		unsigned char merkle_bin[32];
-
-		hex2bin(merkle_bin, pool->swork.merkle[i], 32);
-		memcpy(merkle_sha + 32, merkle_bin, 32);
-		//gen_hashd(merkle_sha, merkle_root, 64);
-    gen_hash(merkle_sha, merkle_root, 64);
-		memcpy(merkle_sha, merkle_root, 32);
-	}
-	data32 = (uint32_t *)merkle_sha;
-	swap32 = (uint32_t *)merkle_root;
-	flip32(swap32, data32);
-	merkle_hash = bin2hex((const unsigned char *)merkle_root, 32);
-
-	header = calloc(pool->swork.header_len, 1);
-	if (unlikely(!header))
-		quit(1, "Failed to calloc header in gen_stratum_work");
-	sprintf(header, "%s%s%s%s%s%s%s",
-		pool->swork.bbversion,
-		pool->swork.prev_hash,
-		merkle_hash,
-		pool->swork.ntime,
-		pool->swork.nbit,
-		"00000000", /* nonce */
-		workpadding);
-
-	/* Store the stratum work diff to check it still matches the pool's
-	 * stratum diff when submitting shares */
-	work->sdiff = pool->swork.diff;
 
 	/* Copy parameters required for share submission */
 	work->job_id = strdup(pool->swork.job_id);
-	work->nonce1 = strdup(pool->nonce1);
-	work->ntime = strdup(pool->swork.ntime);
+	memcpy(work->target, pool->gbt_target, 32);
+	/* Convert hex data to binary data for work */
+	if (unlikely(!hex2bin(&work->data[8], &pool->swork.header[16], 172)))
+		quit(1, "Failed to convert header to data in gen_stratum_work");
 	cg_runlock(&pool->data_lock);
 
-	applog(LOG_DEBUG, "Generated stratum merkle %s", merkle_hash);
-	applog(LOG_DEBUG, "Generated stratum header %s", header);
-	applog(LOG_DEBUG, "Work job_id %s nonce2 %s ntime %s", work->job_id, work->nonce2, work->ntime);
-
-	free(merkle_hash);
-
-	/* Convert hex data to binary data for work */
-	if (unlikely(!hex2bin(work->data, header, 128)))
-		quit(1, "Failed to convert header to data in gen_stratum_work");
-	free(header);
-	calc_midstate(work);
-
-	set_target(work->target, work->sdiff);
+	applog(LOG_DEBUG, "Work job_id %s", work->job_id);
 
 	local_work++;
 	work->pool = pool;
@@ -6045,7 +6044,8 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	work->longpoll = false;
 	work->getwork_mode = GETWORK_MODE_STRATUM;
 	work->work_block = work_block;
-	calc_diff(work, work->sdiff);
+	calc_diff(work, 0);
+//	calc_diff(work, work->sdiff);
 
 	cgtime(&work->tv_staged);
 }
@@ -6097,16 +6097,15 @@ void inc_hw_errors(struct thr_info *thr)
 	thr->cgpu->drv->hw_error(thr);
 }
 
-void submit_nonce(struct thr_info *thr, struct work *work, uint32_t nonce)
+void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 {
-	uint32_t *work_nonce = (uint32_t *)(work->data + 64 + 12);
 	struct timeval tv_work_found;
 	unsigned char hash2[32];
 	uint32_t *hash2_32 = (uint32_t *)hash2;
 	uint32_t diff1targ;
 
 	cgtime(&tv_work_found);
-	*work_nonce = htole32(nonce);
+	work->res_nonce = nonce;
 
 	mutex_lock(&stats_lock);
 	total_diff1 += work->device_diff;
@@ -6120,71 +6119,57 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint32_t nonce)
 
 	diff1targ = opt_scrypt ? 0x0000ffffUL : 0;	
 
-	if (be32toh(hash2_32[7]) > diff1targ) {
-		applog(LOG_WARNING, "%s%d: invalid nonce - HW error",
-				thr->cgpu->drv->name, thr->cgpu->device_id);
+	if (*(uint32_t *)work->hash != 0) {
+//	if (be32toh(hash2_32[7]) > diff1targ) {
+		applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%0X",
+				thr->cgpu->drv->name, thr->cgpu->device_id, *(uint32_t*)work->hash);
 
 		inc_hw_errors(thr);
 		return;
 	}	
-	else // *** deke ***
-	{                      
-		if(!work->hash[31]) 
-		{
-			if(!work->hash[30]) 
-			{
-				if(!work->hash[29]) 
-				{
-					if(!work->hash[28]) // diff 1
-					{
-						if(!work->hash[27]) // diff 256
-						{
-							if(!work->hash[26]) // diff 65536
-							{
-								applog(LOG_WARNING, "%s %d: %02x%02x%02x%02x %02x%02x%02x%02x %s", thr->cgpu->drv->name, thr->cgpu->device_id, work->hash[31], work->hash[30], work->hash[29], work->hash[28], work->hash[27], work->hash[26], work->hash[25], work->hash[24], act_share);                                                                                  
 
-								applog(LOG_WARNING, "%s %d: hash: %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
-								thr->cgpu->drv->name, thr->cgpu->device_id, 
-								work->hash[31], work->hash[30], work->hash[29], work->hash[28], work->hash[27], work->hash[26], work->hash[25], work->hash[24],
-								work->hash[23], work->hash[22], work->hash[21], work->hash[20], work->hash[19], work->hash[18], work->hash[17], work->hash[16],
-								work->hash[15], work->hash[14], work->hash[13], work->hash[12], work->hash[11], work->hash[10], work->hash[9], work->hash[8],
-								work->hash[7], work->hash[6], work->hash[5], work->hash[4], work->hash[3], work->hash[2], work->hash[1], work->hash[0]);
-
-								applog(LOG_WARNING, "%s %d: input data: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-								thr->cgpu->drv->name, thr->cgpu->device_id, 
-								work->data[ 3], work->data[ 2], work->data[ 1], work->data[ 0], work->data[ 7], work->data[ 6], work->data[ 5], work->data[ 4],
-								work->data[11], work->data[10], work->data[ 9], work->data[ 8], work->data[15], work->data[14], work->data[13], work->data[12],
-								work->data[19], work->data[18], work->data[17], work->data[16], work->data[23], work->data[22], work->data[21], work->data[20],
-								work->data[27], work->data[26], work->data[25], work->data[24], work->data[31], work->data[30], work->data[29], work->data[28],                          
-								work->data[35], work->data[34], work->data[33], work->data[32], work->data[39], work->data[38], work->data[37], work->data[36],
-								work->data[43], work->data[42], work->data[41], work->data[40], work->data[47], work->data[46], work->data[45], work->data[44],
-								work->data[51], work->data[50], work->data[49], work->data[48], work->data[55], work->data[54], work->data[53], work->data[52],
-								work->data[59], work->data[58], work->data[57], work->data[56], work->data[63], work->data[62], work->data[61], work->data[60],
-								work->data[67], work->data[66], work->data[65], work->data[64], work->data[71], work->data[70], work->data[69], work->data[68],
-								work->data[75], work->data[74], work->data[73], work->data[72], work->data[79], work->data[78], work->data[77], work->data[76]);                                                                               	                                                    
-							}
-						}
-					}
-				}
-			}
-		}                        
-	}	
-	// *** /DM/ ***
+// *** /DM/ ***
 
 	mutex_lock(&stats_lock);
 	thr->cgpu->last_device_valid_work = time(NULL);
 	mutex_unlock(&stats_lock);
 
-	if (!fulltest(hash2, work->target)) {
+
+	for (int i = 0; i < 32; i ++)
+	{
+		if (work->hash[i] > work->target[i])
+		{
+			applog(LOG_ERR, "Share below target");
+
+			return;
+		}
+		if (work->hash[i] == 0)
+			continue;	
+
+		break;
+	}
+	/*
+
+	if (!fulltest(work->hash, work->target)) {
 		applog(LOG_INFO, "Share below target");
 		return;
 	}
-
+*/
 	submit_work_async(work, &tv_work_found);
 }
 
 static inline bool abandon_work(struct work *work, struct timeval *wdiff, uint64_t hashes)
 {
+/*
+	if (wdiff->tv_sec > opt_scantime)
+	       applog(LOG_ERR, "Abandon work due to scantime.");
+	if ( work->blk.nonce >= MAXTHREADS - hashes)
+	       applog(LOG_ERR, "Abandon work due to blk.nonce.");
+	if ( hashes >= 0xfffffffe )
+	       applog(LOG_ERR, "Abandon work due to hashes.");
+	if (stale_work(work, false))
+	       applog(LOG_ERR, "Abandon work due to stale work.");
+*/
 	if (wdiff->tv_sec > opt_scantime ||
 	    work->blk.nonce >= MAXTHREADS - hashes ||
 	    hashes >= 0xfffffffe ||
@@ -6347,7 +6332,7 @@ static void hash_sole_work(struct thr_info *mythr)
 			timersub(tv_end, &tv_lastupdate, &diff);
 			/* Update the hashmeter at most 5 times per second */
 			if (diff.tv_sec > 0 || diff.tv_usec > 200) {
-//				applog(LOG_WARNING, "Hash time: %u:%u, hash count: %u, device_id: %u, total_mhashes: %f, total_secs: %f", diff.tv_sec, diff.tv_usec, hashes_done, cgpu->device_id, cgpu->total_mhashes, cgpu->prev_meter_totalsecs);			
+//				applog(LOG_WARNING, "Hash time: %u:%u, hash count: %u, device_id: %u, total_mhashes: %f, new hashes: %u", diff.tv_sec, diff.tv_usec, hashes_done, cgpu->device_id, cgpu->total_mhashes, hashes);			
 				hashmeter(thr_id, &diff, hashes_done);
 				hashes_done = 0;
 				copy_time(&tv_lastupdate, tv_end);
@@ -6573,7 +6558,9 @@ void *miner_thread(void *userdata)
 
 	drv->hash_work(mythr);
 out:
+	applog(LOG_ERR,"MINER THREAD EXITING");
 	drv->thread_shutdown(mythr);
+	applog(LOG_ERR,"ICarus exited");
 
 	thread_reportin(mythr);
 	applog(LOG_ERR, "Thread %d failure, exiting", thr_id);

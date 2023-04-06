@@ -1203,97 +1203,34 @@ static char *json_array_string(json_t *val, unsigned int entry)
 
 static bool parse_notify(struct pool *pool, json_t *val)
 {
-	char *job_id, *prev_hash, *coinbase1, *coinbase2, *bbversion, *nbit, *ntime;
 	bool clean, ret = false;
 	int merkles, i;
-	json_t *arr;
+	json_t *job_id_val;
 
-	arr = json_array_get(val, 4);
-	if (!arr || !json_is_array(arr))
+	job_id_val = json_object_get(val, "miningRequestId");
+
+	if (!json_is_integer(job_id_val))
 		goto out;
-
-	merkles = json_array_size(arr);
-
-	job_id = json_array_string(val, 0);
-	prev_hash = json_array_string(val, 1);
-	coinbase1 = json_array_string(val, 2);
-	coinbase2 = json_array_string(val, 3);
-	bbversion = json_array_string(val, 5);
-	nbit = json_array_string(val, 6);
-	ntime = json_array_string(val, 7);
-	clean = json_is_true(json_array_get(val, 8));
-
-	if (!job_id || !prev_hash || !coinbase1 || !coinbase2 || !bbversion || !nbit || !ntime) {
-		/* Annoying but we must not leak memory */
-		if (job_id)
-			free(job_id);
-		if (prev_hash)
-			free(prev_hash);
-		if (coinbase1)
-			free(coinbase1);
-		if (coinbase2)
-			free(coinbase2);
-		if (bbversion)
-			free(bbversion);
-		if (nbit)
-			free(nbit);
-		if (ntime)
-			free(ntime);
-		goto out;
-	}
 
 	cg_wlock(&pool->data_lock);
+//	pool->swork.job_id_int = json_integer_value(job_id_val);
 	free(pool->swork.job_id);
-	free(pool->swork.prev_hash);
-	free(pool->swork.coinbase1);
-	free(pool->swork.coinbase2);
-	free(pool->swork.bbversion);
-	free(pool->swork.nbit);
-	free(pool->swork.ntime);
-	pool->swork.job_id = job_id;
-	pool->swork.prev_hash = prev_hash;
-	pool->swork.coinbase1 = coinbase1;
-	pool->swork.cb1_len = strlen(coinbase1) / 2;
-	pool->swork.coinbase2 = coinbase2;
-	pool->swork.cb2_len = strlen(coinbase2) / 2;
-	pool->swork.bbversion = bbversion;
-	pool->swork.nbit = nbit;
-	pool->swork.ntime = ntime;
-	pool->swork.clean = clean;
-	pool->swork.cb_len = pool->swork.cb1_len + pool->n1_len + pool->n2size + pool->swork.cb2_len;
+	pool->swork.job_id = malloc(11);
 
-	for (i = 0; i < pool->swork.merkles; i++)
-		free(pool->swork.merkle[i]);
-	if (merkles) {
-		pool->swork.merkle = realloc(pool->swork.merkle, sizeof(char *) * merkles + 1);
-		for (i = 0; i < merkles; i++)
-			pool->swork.merkle[i] = json_array_string(arr, i);
+	sprintf(pool->swork.job_id, "%lld", json_integer_value(job_id_val));
+	pool->swork.header_len = 360;
+	json_t *header_val = json_object_get(val, "header");
+	const char *header_hex_str = json_string_value(header_val);
+	if (!header_hex_str)
+	{
+		cg_wunlock(&pool->data_lock);
+		goto out;
 	}
-	pool->swork.merkles = merkles;
-	if (clean)
-		pool->nonce2 = 0;
-	pool->swork.header_len = strlen(pool->swork.bbversion) +
-				 strlen(pool->swork.prev_hash) +
-				 strlen(pool->swork.ntime) +
-				 strlen(pool->swork.nbit) +
-	/* merkle_hash */	 32 +
-	/* nonce */		 8 +
-	/* workpadding */	 96;
-	pool->swork.header_len = pool->swork.header_len * 2 + 1;
-	align_len(&pool->swork.header_len);
+	strcpy(pool->swork.header, header_hex_str);
 	cg_wunlock(&pool->data_lock);
 
 	if (opt_protocol) {
-		applog(LOG_DEBUG, "job_id: %s", job_id);
-		applog(LOG_DEBUG, "prev_hash: %s", prev_hash);
-		applog(LOG_DEBUG, "coinbase1: %s", coinbase1);
-		applog(LOG_DEBUG, "coinbase2: %s", coinbase2);
-		for (i = 0; i < merkles; i++)
-			applog(LOG_DEBUG, "merkle%d: %s", i, pool->swork.merkle[i]);
-		applog(LOG_DEBUG, "bbversion: %s", bbversion);
-		applog(LOG_DEBUG, "nbit: %s", nbit);
-		applog(LOG_DEBUG, "ntime: %s", ntime);
-		applog(LOG_DEBUG, "clean: %s", clean ? "yes" : "no");
+		applog(LOG_DEBUG, "job_id: %s", pool->swork.job_id);
 	}
 
 	/* A notify message is the closest stratum gets to a getwork */
@@ -1302,6 +1239,23 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	ret = true;
 out:
 	return ret;
+}
+
+static bool parse_target(struct pool *pool, json_t *val)
+{
+	json_t *target_val = json_object_get(val, "target");
+	if (!json_is_string(target_val))
+		return false;
+
+	const char *target = json_string_value(target_val);
+
+	cg_wlock(&pool->data_lock);
+	memcpy(pool->gbt_target, target, 32);
+	cg_wunlock(&pool->data_lock);
+
+	applog(LOG_DEBUG, "Pool %d target set to %s", pool->pool_no, target);
+
+	return true;
 }
 
 static bool parse_diff(struct pool *pool, json_t *val)
@@ -1397,7 +1351,7 @@ bool parse_method(struct pool *pool, char *s)
 	if (!method)
 		goto out;
 	err_val = json_object_get(val, "error");
-	params = json_object_get(val, "params");
+	params = json_object_get(val, "body");
 
 	if (err_val && !json_is_null(err_val)) {
 		char *ss;
@@ -1423,6 +1377,11 @@ bool parse_method(struct pool *pool, char *s)
 			pool->stratum_notify = ret = true;
 		else
 			pool->stratum_notify = ret = false;
+		goto out;
+	}
+
+	if (!strncasecmp(buf, "mining.set_target", 17) && parse_target(pool, params)) {
+		ret = true;
 		goto out;
 	}
 
@@ -1624,19 +1583,14 @@ resend:
 
 	sockd = true;
 
-	if (recvd) {
-		/* Get rid of any crap lying around if we're resending */
-		clear_sock(pool);
-		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": []}", swork_id++);
-	} else {
-		if (pool->sessionid) // *** deke ***
-			//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\", \"%s\"]}", swork_id++, pool->sessionid);
-			sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"ccminer/1.0.0-Radiator\", \"%s\"]}", swork_id++, pool->sessionid);
-		else
-			//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\"]}", swork_id++);
-			sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"ccminer/1.0.0-Radiator\"]}", swork_id++);
-			// *** DMz ***
-	}
+	if (pool->sessionid) // *** deke *** 
+		//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\", \"%s\"]}", swork_id++, pool->sessionid);
+		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"ccminer/1.0.0-Radiator\", \"%s\"]}", swork_id++, pool->sessionid);
+	else
+		//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\"]}", swork_id++);
+		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"body\": {\"version\":1,\"agent\":\"vm-miner/1.0.0-IronFish\", \"name\": \"test\", \"publicAddress\": \"%s\",\"extend\":[\"mining.submitted\"]}}", swork_id++, pool->rpc_user);
+//	strcpy(s, "{\"id\":0,\"method\":\"mining.subscribe\",\"body\":{\"version\":1,\"agent\":\"BzMiner/v14.1.0\",\"name\":\"cztst\",\"publicAddress\":\"5a2b672bfa6bc68b6e58e717572bcea37b8c87a94249687e55e5dd70535f5b58=5000000000\",\"extend\":[\"mining.submitted\"]}}");
+			 // *** DMz ***
 
 	if (__stratum_send(pool, s, strlen(s)) != SEND_OK) {
 		applog(LOG_DEBUG, "Failed to send s in initiate_stratum");
@@ -1661,7 +1615,13 @@ resend:
 		goto out;
 	}
 
-	res_val = json_object_get(val, "result");
+	res_val = json_object_get(val, "method");
+	if (json_is_null(res_val) || strcmp(json_string_value(res_val), "mining.subscribed"))
+	{
+		applog(LOG_ERR, "Response to subscribe is not valid. Response: %s", sret);
+		goto out;
+	}
+	res_val = json_object_get(val, "body");
 	err_val = json_object_get(val, "error");
 
 	if (!res_val || json_is_null(res_val) ||
@@ -1680,7 +1640,7 @@ resend:
 		goto out;
 	}
 
-	sessionid = get_sessionid(res_val);
+/*	sessionid = get_sessionid(res_val);
 	if (!sessionid)
 		applog(LOG_DEBUG, "Failed to get sessionid in initiate_stratum");
 	nonce1 = json_array_string(res_val, 1);
@@ -1702,21 +1662,27 @@ resend:
 	pool->nonce1 = nonce1;
 	pool->n1_len = strlen(nonce1) / 2;
 	pool->n2size = n2size;
+
 	cg_wunlock(&pool->data_lock);
+*/
+//	if (sessionid)
+//		applog(LOG_DEBUG, "Pool %d stratum session id: %s", pool->pool_no, pool->sessionid);
 
-	if (sessionid)
-		applog(LOG_DEBUG, "Pool %d stratum session id: %s", pool->pool_no, pool->sessionid);
-
+	successful_connect = true;
 	ret = true;
 out:
 	if (val)
 		json_decref(val);
 
 	if (ret) {
+		cg_wlock(&pool->data_lock);
 		if (!pool->stratum_url)
 			pool->stratum_url = pool->sockaddr_url;
+		pool->swork.job_id = NULL;
 		pool->stratum_active = true;
 		pool->swork.diff = 1;
+		pool->nonce2 = 0;
+		cg_wunlock(&pool->data_lock);
 		if (opt_protocol) {
 			applog(LOG_DEBUG, "Pool %d confirmed mining.subscribe with extranonce1 %s extran2size %d",
 			       pool->pool_no, pool->nonce1, pool->n2size);
