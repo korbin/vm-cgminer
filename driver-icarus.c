@@ -1014,13 +1014,28 @@ uint32_t new_hashcount_since_last_return(struct ICARUS_INFO *info, struct timeva
 	return device_hashcount_this_period;
 }
 
-void update_core_history(struct ICARUS_INFO *info, uint8_t core_num, struct timeval *sample_time, uint32_t hashrate)
+// force_retain_all - if true, forces the update to keep all previous updates, otherwise overwrites 
+// the previous update if it is from the same work.
+// caveat: the check for whether a previous update is from the same work is based on whether an update's
+// sample_time is since the new work start time. It is possible to submit a sample from old work with a 
+// time later than the start of new work and therefore this could introduce some inaccuracy in 
+// later hashrate calculations. Recommendation is to not submit old work for updating the history.
+void update_core_history(struct ICARUS_INFO *info, uint8_t core_num, struct timeval *sample_time, uint32_t hashrate, bool force_retain_all)
 {
 	struct CORE_HISTORY *history = &info->core_history[core_num];
 	struct CORE_HISTORY_SAMPLE *window = &history->samples[1];
-	memcpy(window, history->samples, sizeof(history->samples)-sizeof(struct CORE_HISTORY_SAMPLE));
-	copy_time(&history->samples[0].sample_time, sample_time);
-	history->samples[0].hashrate = hashrate;
+	struct CORE_HISTORY_SAMPLE *prev_sample = &history->samples[0];
+	double work_start = (double)(info->work_start.tv_sec) + ((double)(info->work_start.tv_usec))/((double)1000000); 
+	double sample_finish= (double)(sample_time->tv_sec) + ((double)(sample_time->tv_usec))/((double)1000000); 
+	double prev_sample_finish= (double)(prev_sample->sample_time.tv_sec) + ((double)(prev_sample->sample_time.tv_usec))/((double)1000000); 
+	
+	// We will only log a new sample per work normally, since the most accurate hashrate for a given work
+	// is the last update. All previous updates were for a smaller portion of the FPGA's 
+	// continuous processing of the given work.
+	if (force_retain_all || work_start > prev_sample_finish)
+		memcpy(window, history->samples, sizeof(history->samples)-sizeof(struct CORE_HISTORY_SAMPLE));
+	copy_time(&prev_sample->sample_time, sample_time);
+	prev_sample->hashrate = hashrate;
 }
 
 // 'from_time' is the time reference we are going to look from and go back 'seconds' to average over.
@@ -1074,8 +1089,11 @@ uint64_t get_device_hashrate_average(struct ICARUS_INFO *info, uint32_t seconds,
 	for (int i=0; i < info->expected_cores; i ++)
 	{
 		uint32_t hashrate = get_core_hashrate_average(info, i, seconds, from_time);
+		applog(LOG_ERR, "Core %d hashrate avg = %u", i, hashrate);
 		if (hashrate != 0)
 		{
+			if (hashrate < 100000000)
+		applog(LOG_ERR, "Core %d dropping hashrate avg = %u", i, hashrate);
 			hashrate_sum += hashrate;
 			if ((info->enabled_cores >> i) & 0x1 == 0)
 				enable_core(info, i);
@@ -1141,7 +1159,7 @@ bool update_active_core(struct ICARUS_INFO *info, struct timeval *since_time, ui
 
 	// inactive since reference time
 	disable_core(info, core_num);
-	update_core_history(info, core_num, sample_time, 0);
+	update_core_history(info, core_num, sample_time, 0, true);
 
 	return true;
 }
@@ -1544,10 +1562,8 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		 return estimate_hashes;
 	}
 	
-	// *** deke ***
 	unsigned int volt_raw, temp_raw;	
 	
-	//Tyler edit
 	if ((nonce_bin[0] == 0xbb) && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
 	{
 		// nonce
@@ -1559,7 +1575,6 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		memcpy((char *)&nonce, nonce_tmp, sizeof(nonce_tmp));
 		icarus->result_is_counter = true;
 	}
-	//
 	else if ((nonce_bin[0] == 0x01) && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
 	{
 		applog(LOG_INFO, "RECEIVED NONCE RESPONSE");
@@ -1631,7 +1646,6 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 		return hash_count;
 	}
-	//else if (nonce_bin[0] == 0xbb)
 	else
 	{
 		applog(LOG_ERR, "Unknown message from FPGA. Byte: 0x%01X", nonce_bin[0]);
@@ -1642,13 +1656,10 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	nonce = swab32(nonce);
 #endif
 
-	// *** deke ***	
-	//nonce_d = swab32(nonce);
 	//applog(LOG_WARNING, "VCU1525 %d: Nonce found %08x", icarus->device_id, nonce_d);
 	nonce_d = nonce_bin[12];
 //	applog(LOG_WARNING, "VCU1525 %d: Core %08x", icarus->device_id, nonce_d);
 
-	// Tyler Edit
 	// if not enabled
 	if ((info->enabled_cores >> (nonce_d)) ^ 0x1)
 		enable_core(info, nonce_d);
@@ -1708,7 +1719,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		// Calculate the core hashrate based on its progress since work was assigned
 		uint32_t core_hashrate = (double)hash_count / ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
 	
-		update_core_history(info, nonce_d, &tv_finish, core_hashrate);
+		update_core_history(info, nonce_d, &tv_finish, core_hashrate, false);
 	
 		// device hashrate
 		// Store this so we can calculate hash_count on future returns when we have no nonce or counter; timeouts and voltage reports.
@@ -1718,7 +1729,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	
 		hash_count = new_hashcount_since_last_return(info, &tv_finish);
 	
-	//	applog(LOG_ERR, "Core %d update: Hashrate update instance: %u, Previous hashrate: %llu, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", nonce_d, core_hashrate, info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
+		applog(LOG_ERR, "Core %d update: Hashrate update instance: %u, Previous hashrate: %llu, Elapsed time: %f, Total Hash Count: %08X, Hash Count: %08X", nonce_d, core_hashrate, info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, hash_count);
 	
 		// applog(LOG_WARNING, "Hashrate updated to: %u", info->prev_hashrate);
 		//
