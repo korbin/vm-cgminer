@@ -2069,7 +2069,11 @@ static void curses_print_status(void)
 	wattron(statuswin, A_REVERSE);		
 	mvwhline(statuswin, 0, 0, ' ', 100);	
 	mvwprintw(statuswin, 1, 0, " " PACKAGE " version " VERSION "."deke_VERSION" [Iron Fish] by deke - Started: %s                ", datestamp); 
-	mvwhline(statuswin, 2, 0, ' ', 100);	
+	mvwhline(statuswin, 1, 78, ' ', 22);	
+	mvwprintw(statuswin, 2, 4, "Press '?' for hotkeys"); 
+	mvwhline(statuswin, 2, 25, ' ', 75);	
+	mvwhline(statuswin, 2, 0, ' ', 4);	
+	//mvwhline(statuswin, 2, 0, ' ', 100);	
 	wattroff(statuswin, A_REVERSE);	
 	mvwprintw(statuswin, 3, 0, " %s", statusline);
 	wclrtoeol(statuswin);
@@ -3850,6 +3854,10 @@ static void rebuild_hash(struct work *work)
 	applog(LOG_WARNING, "hash %s", hashstr);
 #endif
 	
+	// I don't know if we can determine from the difficulty the pool
+	// is working on from the header data of Iron Fish? Skipping this for now.
+	return;
+
 
 	work->share_diff = share_diff(work);
 	if (unlikely(work->share_diff >= current_diff)) {
@@ -4961,6 +4969,15 @@ retry:
 	opt_loginput = false;
 }
 
+			
+static void display_help(void)
+{
+	opt_loginput = true;
+	immedok(logwin, true);
+	clear_logwin();
+	wlogprint("[Q]uit [D]isplay options [S]ettings [P]ools\n");
+}
+
 static void display_options(void)
 {
 	int selected;
@@ -5177,8 +5194,11 @@ static void *input_thread(void __maybe_unused *userdata)
 		if (!strncasecmp(&input, "q", 1)) {
 			kill_work();
 			return NULL;
-		} else if (!strncasecmp(&input, "d", 1))
+		} 
+		else if (!strncasecmp(&input, "d", 1))
 			display_options();
+		else if (!strncasecmp(&input, "?", 1))
+			display_help();
 		else if (!strncasecmp(&input, "p", 1))
 			display_pools();
 		else if (!strncasecmp(&input, "s", 1))

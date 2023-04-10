@@ -1735,7 +1735,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			applog(LOG_ERR, "Real Nonce %s", nonce_str);
 */
 		}
-		applog(LOG_WARNING, "VCU1525 %d: nonce %016lx, [core %d]", icarus->device_id, real_nonce, nonce_d);
+		applog(LOG_DEBUG, "VCU1525 %d: nonce %016lx, [core %d]", icarus->device_id, real_nonce, nonce_d);
 		uint64_t flip_nonce = bswap_64(real_nonce);
 //		applog(LOG_WARNING, "real nonce = 0x%0llX, flip nonce = 0x%0llX", real_nonce, flip_nonce);
 		submit_nonce(thr, work, flip_nonce);
@@ -1781,7 +1781,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	}
 	else
 	{
-		applog(LOG_ERR, "Got old work response!!!!");
+		applog(LOG_DEBUG, "Got old work response!!!!");
 		hash_count = get_hashcount_estimate_for_return(info, work, &tv_finish);
 		icarus->result_is_estimate = true;
 	}
