@@ -6143,12 +6143,20 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 
 			return;
 		}
-		if (work->hash[i] == 0)
-			continue;	
-
-		break;
+		if (work->hash[i] < work->target[i])
+			break;
 	}
-	/*
+/*	char result_hash_str[32*3+1];
+	for (int i=0; i<32; i++)
+	{
+		sprintf(result_hash_str+i*3, "%02X ", work->hash[i]);	
+	}
+	result_hash_str[32*3] = 0;
+	applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
+	char target_str[33];
+	memcpy(target_str, work->target, 32);
+	target_str[32] = 0;
+	applog(LOG_WARNING, "target: %s", target_str);
 
 	if (!fulltest(work->hash, work->target)) {
 		applog(LOG_INFO, "Share below target");
