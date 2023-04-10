@@ -898,6 +898,11 @@ static bool icarus_detect_one(const char *devpath)
 	info->active_core_count = 0;
 
 	memset(info->core_history, 0, sizeof(info->core_history));
+	cgtime(&info->core_history[0].samples[0].sample_time);
+	info->core_history[0].samples[0].hashrate = cainsmore_clock_speed*5/2*1000000;
+	for (int i = 1; i < MAX_CORES; ++i)
+		memcpy(&info->core_history[i].samples[0], &info->core_history[0].samples[0], sizeof(struct CORE_HISTORY_SAMPLE));
+
 	if (nonce_bin[0] == 0xbb)	
 	{
 		info->expected_cores = nonce_bin[1];
@@ -1023,7 +1028,6 @@ uint32_t new_hashcount_since_last_return(struct ICARUS_INFO *info, struct timeva
 void update_core_history(struct ICARUS_INFO *info, uint8_t core_num, struct timeval *sample_time, uint32_t hashrate, bool force_retain_all)
 {
 	struct CORE_HISTORY *history = &info->core_history[core_num];
-	struct CORE_HISTORY_SAMPLE *window = &history->samples[1];
 	struct CORE_HISTORY_SAMPLE *prev_sample = &history->samples[0];
 	double work_start = (double)(info->work_start.tv_sec) + ((double)(info->work_start.tv_usec))/((double)1000000); 
 	double sample_finish= (double)(sample_time->tv_sec) + ((double)(sample_time->tv_usec))/((double)1000000); 
@@ -1033,7 +1037,10 @@ void update_core_history(struct ICARUS_INFO *info, uint8_t core_num, struct time
 	// is the last update. All previous updates were for a smaller portion of the FPGA's 
 	// continuous processing of the given work.
 	if (force_retain_all || work_start > prev_sample_finish)
-		memcpy(window, history->samples, sizeof(history->samples)-sizeof(struct CORE_HISTORY_SAMPLE));
+	{
+		for (int i = MAX_CORE_HISTORY_SAMPLES-1; i > 0; --i)
+			memcpy(&history->samples[i-1], &history->samples[i], sizeof(struct CORE_HISTORY_SAMPLE));
+	}
 	copy_time(&prev_sample->sample_time, sample_time);
 	prev_sample->hashrate = hashrate;
 }
