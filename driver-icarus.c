@@ -224,7 +224,7 @@ struct ICARUS_INFO {
 	//Tyler Edit
 	bool work_changed;
 	bool first_timeout;
-	uint16_t enabled_cores;
+	uint64_t enabled_cores;
 	int active_core_count;
 	struct timeval work_start;
 	struct timeval last_interval_timeout;
@@ -989,6 +989,8 @@ void disable_core(struct ICARUS_INFO *info, uint8_t core_num)
 	if (((info->enabled_cores >> core_num) & 0x1) == 0)
 		return;
 
+	if (info->active_core_count == 0)
+		applog(LOG_ERR, "Active core count underrun for enabled_cores: %u, trying to disable core %u", info->enabled_cores, core_num);
 	info->active_core_count --; 
 
 	info->enabled_cores &= ~(0x1 << core_num);
@@ -1001,6 +1003,8 @@ void enable_core(struct ICARUS_INFO *info, uint8_t core_num)
 		return;
 
 	info->active_core_count ++;
+	if (info->active_core_count > 18)
+		applog(LOG_ERR, "Active core count overrun for enabled_cores: %u, trying to enable core %u", info->enabled_cores, core_num);
 	info->enabled_cores |= 0x1 << core_num;
 	if (core_num + 1 > info->expected_cores)
 		info->expected_cores = core_num + 1;
@@ -1735,7 +1739,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			applog(LOG_ERR, "Real Nonce %s", nonce_str);
 */
 		}
-		applog(LOG_DEBUG, "VCU1525 %d: nonce %016lx, [core %d]", icarus->device_id, real_nonce, nonce_d);
+		applog(LOG_WARNING, "VCU1525 %d: nonce %016lx, [core %d]", icarus->device_id, real_nonce, nonce_d);
 		uint64_t flip_nonce = bswap_64(real_nonce);
 //		applog(LOG_WARNING, "real nonce = 0x%0llX, flip nonce = 0x%0llX", real_nonce, flip_nonce);
 		submit_nonce(thr, work, flip_nonce);
