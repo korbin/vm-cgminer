@@ -1,0 +1,25 @@
+In additions to windows-built.txt, I needed to:
+
+Get mingw from:
+https://sourceforge.net/projects/mingw/files/OldFiles/mingw-get-inst/mingw-get-inst-20120426/
+
+From mingw console:
+mingw-get install autoconf
+mingw-get install libtool
+
+
+https://download.gnome.org/binaries/win32/dependencies/
+- pkg-config-dev_0.26-1_win32.zip
+- pkg-config_0.26-1_win32.zip
+
+Libusb can be downloaded at the following under download menu and windows binaries.
+https://libusb.info/
+
+Found compatible curl 7.80.0 library for mingw at:
+https://curl.se/windows/dl-7.80.0/
+with main site at: https://github.com/curl/curl-for-win
+
+Needed to make libcurl.pc file in /lib/pkgconfig/
+-ex. https://github.com/curl/curl/blob/master/libcurl.pc.in
+
+make CFLAGS="-std=gnu99"
