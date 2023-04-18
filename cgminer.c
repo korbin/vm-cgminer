@@ -6364,6 +6364,8 @@ static void hash_sole_work(struct thr_info *mythr)
 			if (hashes > cgpu->max_hashes)
 				cgpu->max_hashes = hashes;
 
+			timersub(tv_end, &tv_start, &diff);
+
 			sdiff.tv_sec += diff.tv_sec;
 			sdiff.tv_usec += diff.tv_usec;
 			if (sdiff.tv_usec > 1000000) {

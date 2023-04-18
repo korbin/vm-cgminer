@@ -1,4 +1,4 @@
-
+NEED_USBUTILS_C = FALSE
 ACLOCAL_AMFLAGS = -I m4
 
 if WANT_JANSSON
@@ -29,7 +29,7 @@ cgminer_LDADD	= $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
 		  @MATH_LIBS@ lib/libgnu.a ccan/libccan.a
 
 if HAVE_WINDOWS
-cgminer_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@ @LIBUSB_CFLAGS@
+cgminer_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@ @LIBUSB_CFLAGS@ -DBLAKE3_NO_SSE2 -DBLAKE3_NO_SSE41 -DBLAKE3_NO_AVX2 -DBLAKE3_NO_AVX512
 else
 cgminer_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@ @LIBUSB_CFLAGS@ @LIBCURL_CFLAGS@
 endif
@@ -43,9 +43,14 @@ cgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h	\
 		   util.c util.h uthash.h logging.h		\
 		   sha2.c sha2.h api.c usbutils.h 
 
-cgminer_SOURCES	+= blake3/blake3.c blake3/blake3_dispatch.c blake3/blake3_portable.c \
-    blake3/blake3_sse2_x86-64_unix.S blake3/blake3_sse41_x86-64_unix.S blake3/blake3_avx2_x86-64_unix.S \
+cgminer_SOURCES	+= blake3/blake3.c blake3/blake3_dispatch.c blake3/blake3_portable.c 
+if HAVE_WINDOWS
+#cgminer_SOURCES	+= blake3/blake3_sse2_x86-64_windows_gnu.S blake3/blake3_sse41_x86-64_windows_gnu.S blake3/blake3_avx2_x86-64_windows_gnu.S \
+    blake3/blake3_avx512_x86-64_windows_gnu.S
+else
+cgminer_SOURCES	+= blake3/blake3_sse2_x86-64_unix.S blake3/blake3_sse41_x86-64_unix.S blake3/blake3_avx2_x86-64_unix.S \
     blake3/blake3_avx512_x86-64_unix.S
+endif
 
 cgminer_SOURCES	+= logging.c
 
