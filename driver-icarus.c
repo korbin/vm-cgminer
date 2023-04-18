@@ -1044,7 +1044,6 @@ static bool icarus_detect_one(const char *devpath)
 	int cainsmore_clock_speed = 70;		
 	get_clocks(this_option_offset, &cainsmore_clock_speed, device_type);	
 
-	if (nonce_bin[0] != 0xbb) {// && strncmp(&nonce_hex[4], &golden_nonce[4], 30)) {
 
 	int cainsmore_ret;
 	if (device_type == 2)
