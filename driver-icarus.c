@@ -172,7 +172,6 @@ static const char *MODE_LONG_STR = "long";
 static const char *MODE_VALUE_STR = "value";
 static const char *MODE_UNKNOWN_STR = "unknown";
 
-// Tyler Edit
 #define CORE_MASK 0x1FFFFFFF // 8 core version, hardcoded as requested
 #define MAX_CORES 256
 #define MAX_CORE_HISTORY_SAMPLES 10
@@ -221,7 +220,6 @@ struct ICARUS_INFO {
 	int fpga_count;
 	uint32_t nonce_mask;
 	
-	//Tyler Edit
 	bool work_changed;
 	bool first_timeout;
 	uint64_t enabled_cores;
@@ -233,6 +231,7 @@ struct ICARUS_INFO {
 	uint64_t prev_hashcount;
 	uint8_t expected_cores;
 	struct CORE_HISTORY core_history[MAX_CORES];
+	uint16_t device_id;
 	//
 };
 
@@ -341,8 +340,249 @@ static int icarus_write(int fd, const void *buf, size_t bufLen)
 	return 0;
 }
 
+// *** DedMaroz ***
+static bool cairnsmore_send_cmd_cvp(int fd, uint8_t cmd, uint16_t data, bool probe)
+{
+	unsigned int freq;
+  
+	freq = (data * 5) / 2;
+	unsigned char pll[140] = { 0xaa,0xaa,0xaa,0xaa,0x12,0x08,0x00,0x85,0xed,0xf7,0xff,0x7a,0xbb,0xbb,0xbb,0xbb,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+	
+	if(freq < 425) // 400 MHz
+	{
+		pll[4] = 0x12; pll[5] = 0x08; pll[6] = 0x00; pll[7] = 0x85; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 450) // 425 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x09; pll[6] = 0x00; pll[7] = 0x8e; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 475) // 450 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x49; pll[6] = 0x00; pll[7] = 0x96; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 500) // 475 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x4a; pll[6] = 0x00; pll[7] = 0x9e; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 525) // 500 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x8a; pll[6] = 0x00; pll[7] = 0xa7; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 550) // 525 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x8b; pll[6] = 0x00; pll[7] = 0xaf; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 575) // 550 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0xcb; pll[6] = 0x00; pll[7] = 0xb7; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 600) // 575 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0xcc; pll[6] = 0x00; pll[7] = 0xc0; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 625) // 600 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x0c; pll[6] = 0x00; pll[7] = 0xc8; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 650) // 625 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x0d; pll[6] = 0x00; pll[7] = 0xd0; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 675) // 650 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x4d; pll[6] = 0x00; pll[7] = 0xd9; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 700) // 675 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x4e; pll[6] = 0x00; pll[7] = 0xe1; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 725) // 700 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x8e; pll[6] = 0x00; pll[7] = 0xe9; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 750) // 725 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x8f; pll[6] = 0x00; pll[7] = 0xf2; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 775) // 750 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0xcf; pll[6] = 0x00; pll[7] = 0xfa; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 800) // 775 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0xd0; pll[6] = 0x01; pll[7] = 0x02; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 825) // 800 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x10; pll[6] = 0x01; pll[7] = 0x0b; pll[8] = 0x00; pll[9] = 0x41; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 850) // 825 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x11; pll[6] = 0x01; pll[7] = 0x13; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 875) // 850 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x51; pll[6] = 0x01; pll[7] = 0x1b; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 900) // 875 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x52; pll[6] = 0x01; pll[7] = 0x24; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 925) // 900 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x92; pll[6] = 0x01; pll[7] = 0x2c; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 950) // 925 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x93; pll[6] = 0x01; pll[7] = 0x34; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 975) // 950 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0xd3; pll[6] = 0x01; pll[7] = 0x3d; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 1000) // 975 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0xd4; pll[6] = 0x01; pll[7] = 0x45; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else // 1000 MHz 
+	{
+		pll[4] = 0x15; pll[5] = 0x14; pll[6] = 0x01; pll[7] = 0x4d; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x40;
+	}
+    
+	return write(fd, pll, sizeof(pll)) == sizeof(pll);
+}
+// *** /DM/ ***
+
+// *** DedMaroz ***
+static bool cairnsmore_send_cmd_fk33(int fd, uint8_t cmd, uint16_t data, bool probe)
+{
+	unsigned int freq;
+  
+	freq = (data * 5) / 2;
+	unsigned char pll[140] = { 0xaa,0xaa,0xaa,0xaa,0x12,0x08,0x00,0x85,0x00,0x82,0x00,0x00,0xbb,0xbb,0xbb,0xbb,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,				
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+	
+	if(freq < 425) // 400 MHz 
+	{		
+		pll[4] = 0x12; pll[5] = 0x08; pll[6] = 0x00; pll[7] = 0x85; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 450) // 425 MHz 
+	{		
+		pll[4] = 0x12; pll[5] = 0x09; pll[6] = 0x00; pll[7] = 0x8e; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 475) // 450 MHz 
+	{	
+		pll[4] = 0x12; pll[5] = 0x49; pll[6] = 0x00; pll[7] = 0x96; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 500) // 475 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x4a; pll[6] = 0x00; pll[7] = 0x9e; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 525) // 500 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x8a; pll[6] = 0x00; pll[7] = 0xa7; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 550) // 525 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0x8b; pll[6] = 0x00; pll[7] = 0xaf; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 575) // 550 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0xcb; pll[6] = 0x00; pll[7] = 0xb7; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 600) // 575 MHz 
+	{
+		pll[4] = 0x12; pll[5] = 0xcc; pll[6] = 0x00; pll[7] = 0xc0; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 625) // 600 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x0c; pll[6] = 0x00; pll[7] = 0xc8; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 650) // 625 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x0d; pll[6] = 0x00; pll[7] = 0xd0; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 675) // 650 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x4d; pll[6] = 0x00; pll[7] = 0xd9; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 700) // 675 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x4e; pll[6] = 0x00; pll[7] = 0xe1; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 725) // 700 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x8e; pll[6] = 0x00; pll[7] = 0xe9; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 750) // 725 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0x8f; pll[6] = 0x00; pll[7] = 0xf2; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 775) // 750 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0xcf; pll[6] = 0x00; pll[7] = 0xfa; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 800) // 775 MHz 
+	{
+		pll[4] = 0x13; pll[5] = 0xd0; pll[6] = 0x01; pll[7] = 0x02; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 825) // 800 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x10; pll[6] = 0x01; pll[7] = 0x0b; pll[8] = 0x00; pll[9] = 0x82; pll[10] = 0x00; pll[11] = 0x00;
+	}
+	else if(freq < 850) // 825 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x11; pll[6] = 0x01; pll[7] = 0x13; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 875) // 850 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x51; pll[6] = 0x01; pll[7] = 0x1b; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 900) // 875 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x52; pll[6] = 0x01; pll[7] = 0x24; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 925) // 900 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x92; pll[6] = 0x01; pll[7] = 0x2c; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 950) // 925 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0x93; pll[6] = 0x01; pll[7] = 0x34; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 975) // 950 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0xd3; pll[6] = 0x01; pll[7] = 0x3d; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else if(freq < 1000) // 975 MHz 
+	{
+		pll[4] = 0x14; pll[5] = 0xd4; pll[6] = 0x01; pll[7] = 0x45; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+	else // 1000 MHz 
+	{
+		pll[4] = 0x15; pll[5] = 0x14; pll[6] = 0x01; pll[7] = 0x4d; pll[8] = 0x01; pll[9] = 0x04; pll[10] = 0x00; pll[11] = 0x40;
+	}
+    
+	return write(fd, pll, sizeof(pll)) == sizeof(pll);
+}
+// *** /DM/ ***
 // *** deke ***
-static bool cairnsmore_send_cmd(int fd, uint8_t cmd, uint16_t data, bool probe)
+static bool cairnsmore_send_cmd_bcu(int fd, uint8_t cmd, uint16_t data, bool probe)
 {
 	unsigned int freq;
   
@@ -684,7 +924,7 @@ static void get_options(int this_option_offset, int *baud, int *work_division, i
 	}
 }
 
-static void get_clocks(int this_option_offset, int *cainsmore_clock)
+static void get_clocks(int this_option_offset, int *cainsmore_clock, uint8_t device_type)
 {
 	char err_buf[BUFSIZ+1];
 	char buf[BUFSIZ+1];
@@ -719,13 +959,32 @@ static void get_clocks(int this_option_offset, int *cainsmore_clock)
 		tmp = atoi(buf);
 
 		// *** deke ***		
-		if (tmp >= 400 && tmp <= 800)
-			*cainsmore_clock = tmp * 2 / 5;	// NB 2.5Mhz units
-		else {			
-			sprintf(err_buf, "Invalid VCU1525 clock must be between 400 and 1000MHz", buf);
-			quit(1, err_buf);
+		
+		if (device_type == 2)
+		{
+			if (!(tmp >= 400 && tmp <= 1000))
+			{
+				sprintf(err_buf, "Invalid FK33 clock must be between 400 and 1000MHz");
+				quit(1, err_buf);
+			}
 		}
-		// *** /DM/ ***
+		else if (device_type == 1 )
+		{
+			if (!(tmp >= 400 && tmp <= 800))
+			{
+				sprintf(err_buf, "Invalid VCU1525 clock must be between 400 and 1000MHz");
+				quit(1, err_buf);
+			}
+		}
+		else if (device_type == 0)
+		{
+			if (!(tmp >= 400 && tmp <= 800))
+			{
+				sprintf(err_buf, "Invalid CVP-13 clock must be between 400 and 1000MHz");
+				quit(1, err_buf);
+			}
+		}
+		*cainsmore_clock = tmp * 2 / 5;	// NB 2.5Mhz units
 	}
 }
 
@@ -764,9 +1023,6 @@ static bool icarus_detect_one(const char *devpath)
 
 	get_options(this_option_offset, &baud, &work_division, &fpga_count);
 
-	int cainsmore_clock_speed = 70;		
-	get_clocks(this_option_offset, &cainsmore_clock_speed);	
-
 	applog(LOG_DEBUG, "Icarus Detect: Attempting to open %s", devpath);
 
 	fd = icarus_open2(devpath, baud, true);
@@ -782,7 +1038,21 @@ static bool icarus_detect_one(const char *devpath)
 	memset(nonce_bin, 0, sizeof(nonce_bin));
 	icarus_gets(nonce_bin, fd, &tv_finish, NULL, 6);
 	
-	int cainsmore_ret = cairnsmore_send_cmd(fd, 0, cainsmore_clock_speed, false);
+	uint8_t device_type = nonce_bin[0];
+	if (device_type > 2)
+		device_type = 1;
+	int cainsmore_clock_speed = 70;		
+	get_clocks(this_option_offset, &cainsmore_clock_speed, device_type);	
+
+	if (nonce_bin[0] != 0xbb) {// && strncmp(&nonce_hex[4], &golden_nonce[4], 30)) {
+
+	int cainsmore_ret;
+	if (device_type == 2)
+		cainsmore_ret = cairnsmore_send_cmd_fk33(fd, 0, cainsmore_clock_speed, false);
+	else if (device_type==0)
+		cainsmore_ret = cairnsmore_send_cmd_cvp(fd, 0, cainsmore_clock_speed, false);
+	else if (device_type == 1)
+		cainsmore_ret = cairnsmore_send_cmd_bcu(fd, 0, cainsmore_clock_speed, false);
 
 	icarus_close(fd);
 
@@ -897,6 +1167,7 @@ static bool icarus_detect_one(const char *devpath)
 	info->enabled_cores = 0;
 	info->active_core_count = 0;
 
+	info->device_id = icarus->device_id;
 	memset(info->core_history, 0, sizeof(info->core_history));
 	cgtime(&info->core_history[0].samples[0].sample_time);
 	info->core_history[0].samples[0].hashrate = cainsmore_clock_speed*5/2*1000000;
@@ -951,7 +1222,17 @@ static bool icarus_prepare(struct thr_info *thr)
 	return true;
 }
 
-// Tyler Edit
+void display_received_message(uint8_t *nonce_bin)
+{
+	char result_nonce_str[ICARUS_READ_SIZE*3+1];
+	for (int i=0; i<ICARUS_READ_SIZE; i++)
+	{
+		sprintf(result_nonce_str+i*3, "%02X ", nonce_bin[i]);	
+	}
+	result_nonce_str[ICARUS_READ_SIZE*3] = 0;
+	applog(LOG_WARNING, "Received FPGA Response: %s", result_nonce_str);
+}
+
 void icarus_statline(char *logline, struct cgpu_info *cgpu)
 {
 	char str_active_cores[256];
@@ -990,7 +1271,7 @@ void disable_core(struct ICARUS_INFO *info, uint8_t core_num)
 		return;
 
 	if (info->active_core_count == 0)
-		applog(LOG_ERR, "Active core count underrun for enabled_cores: %u, trying to disable core %u", info->enabled_cores, core_num);
+		applog(LOG_ERR, "FPGA %d: Active core count (%u) underrun for expected_cores: %u, enabled_cores: %lu, trying to disable core %u", info->device_id, info->active_core_count, info->expected_cores, info->enabled_cores, core_num);
 	info->active_core_count --; 
 
 	info->enabled_cores &= ~(0x1 << core_num);
@@ -1003,9 +1284,9 @@ void enable_core(struct ICARUS_INFO *info, uint8_t core_num)
 		return;
 
 	info->active_core_count ++;
-	if (info->active_core_count > 18)
-		applog(LOG_ERR, "Active core count overrun for enabled_cores: %u, trying to enable core %u", info->enabled_cores, core_num);
-	info->enabled_cores |= 0x1 << core_num;
+	if (info->active_core_count > info->expected_cores)
+		applog(LOG_ERR, "FPGA %d: Active core count (%u) overrun for expected_cores: %u, enabled_cores: %lu, trying to enable core %u", info->device_id, info->active_core_count, info->expected_cores, info->enabled_cores, core_num);
+	info->enabled_cores |= (uint64_t)0x1 << core_num;
 	if (core_num + 1 > info->expected_cores)
 		info->expected_cores = core_num + 1;
 }
@@ -1016,7 +1297,7 @@ uint32_t new_hashcount_since_last_return(struct ICARUS_INFO *info, struct timeva
 
 	timersub(until, &info->prev_hashcount_return, &elapsed);
 	copy_time(&info->prev_hashcount_return, until);
-	uint32_t device_hashcount_this_period = (double)info->prev_hashrate * ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
+	uint64_t device_hashcount_this_period = (double)info->prev_hashrate * ((double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000)); 
 
 	info->prev_hashcount += device_hashcount_this_period;
 
@@ -1066,8 +1347,11 @@ uint32_t get_core_hashrate_average(struct ICARUS_INFO *info, uint8_t core_num, d
 		timersub(from_time, &sample->sample_time, &elapsed);
 		double time_ago = (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000);
 		if (time_ago > seconds)
+		{
+			if (i == 0)
+				return sample->hashrate;
 			break;
-
+		}
 		sample_count ++;
 		hashrate_sum += sample->hashrate;
 	}
@@ -1149,7 +1433,8 @@ bool beyond_new_work_threshold(struct ICARUS_INFO *info, struct timeval *until_t
 	double seconds = (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000); 
 	uint64_t fastest_core_hashrate = get_fastest_core_hashrate_this_work(info, until_time);
 	uint64_t core_hashcount = fastest_core_hashrate * seconds;
-	return (core_hashcount > (double)0xffffffff*0.75*info->expected_cores);
+//	applog(LOG_ERR, "Fastest core hashrate: %lu, fastest hash_count: %09lX, Hash Count threshold: %09lX, Elapsed time: %f", fastest_core_hashrate, core_hashcount, (uint32_t)((double)0xffffffff*0.75), (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000));
+	return (core_hashcount > (double)0xffffffff*0.75);
 }
 
 uint64_t get_hashcount_estimate_for_return(struct ICARUS_INFO *info, struct work *work, struct timeval *until_time)
@@ -1164,8 +1449,9 @@ uint64_t get_hashcount_estimate_for_return(struct ICARUS_INFO *info, struct work
 
 	if (beyond_new_work_threshold(info, until_time))
 	{
-//		applog(LOG_ERR, "Forcing abandon_work to avoid idle FPGA. Previous hashrate: %lu, Elapsed time: %f, Hash Count: %09lX", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount);
+//		applog(LOG_ERR, "Forcing abandon_work to avoid idle FPGA. Previous hashrate: %lu, Elapsed time: %f, Hash Count: %09lX, VCU: %u, Nonce2: %u", info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, info->device_id, *(uint32_t*)work->data);
 		work->blk.nonce = 0xffffffff;
+		work->force_abandon = true;
 	}
 	copy_time(&info->prev_hashcount_return, until_time);
 
@@ -1225,7 +1511,7 @@ bool update_active_device(struct ICARUS_INFO *info, struct timeval *since_time, 
 	}
 	if (updated)
 	{
-		uint32_t new_device_hashrate = get_device_hashrate_average(info, HASHRATE_AVG_OVER_SECS, sample_time, false);
+		uint64_t new_device_hashrate = get_device_hashrate_average(info, HASHRATE_AVG_OVER_SECS, sample_time, false);
 		info->prev_hashrate = new_device_hashrate;
 	}
 
@@ -1386,6 +1672,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	// *** deke ***	
 	unsigned char ob_bin[ICARUS_WRITE_SIZE], nonce_bin[ICARUS_READ_SIZE];
+	unsigned char buf[ICARUS_WRITE_SIZE];
 	char nonce_tmp[4];	
 	// *** /DM/ ***
 	char *ob_hex;
@@ -1408,11 +1695,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	elapsed.tv_sec = elapsed.tv_usec = 0;
 
 	icarus = thr->cgpu;
-	// Tyler Edit
 	icarus->result_is_nonce = false;
 	icarus->result_is_counter = false;
 	icarus->result_is_estimate = false;
-	//
 
 	if (icarus->device_fd == -1)
 		if (!icarus_prepare(thr)) {
@@ -1425,52 +1710,15 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	fd = icarus->device_fd;
 
-
-#if 0	
-	unsigned char test[76] = 
-	{
-		0x00, 0x00, 0x00, 0x20, 0x56, 0xf6, 0x42, 0x58, 
-		0xe0, 0xdd, 0x43, 0x7d, 0xfd, 0x05, 0x82, 0xa9, 
-		0xd0, 0x6e, 0xfc, 0x79, 0xe6, 0x69, 0x80, 0x98, 
-		0x69, 0xfa, 0x1d, 0x7e, 0xc1, 0x7e, 0x00, 0x00, 
-		0x00, 0x00, 0x00, 0x00, 0x6a, 0x18, 0x3c, 0x7e,
-		0xb6, 0x2c, 0x3f, 0x76, 0x1c, 0x9c, 0xb1, 0x98, 
-		0xef, 0xa4, 0x1f, 0xd7, 0xa7, 0x53, 0x87, 0xb7, 
-		0x08, 0x84, 0xa0, 0x22, 0x79, 0xe8, 0x32, 0xd0, 
-		0x27, 0x1e, 0x76, 0xc4, 0x9a, 0xde, 0x21, 0x63, 
-		0xa3, 0xe8, 0x00, 0x1b
-	};
-	
-	for (i = 0; i < 76; i++){
-		ob_bin[i+64] = test[i];				
-	}
-#endif 
-	
-#if 0
-	applog(LOG_WARNING, "%s %d: OB_BIN: %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x",
-		thr->cgpu->drv->name, thr->cgpu->device_id, 
-		ob_bin[ 0], ob_bin[ 1], ob_bin[ 2], ob_bin[ 3], ob_bin[ 4], ob_bin[ 5], ob_bin[ 6], ob_bin[ 7], ob_bin[ 8], ob_bin[ 9], ob_bin[10], ob_bin[11], ob_bin[12], ob_bin[13], ob_bin[14], ob_bin[15],
-		ob_bin[16], ob_bin[17], ob_bin[18], ob_bin[19], ob_bin[20], ob_bin[21], ob_bin[22], ob_bin[23], ob_bin[24], ob_bin[25], ob_bin[26], ob_bin[27], ob_bin[28], ob_bin[29], ob_bin[30], ob_bin[31],
-		ob_bin[32], ob_bin[33], ob_bin[34], ob_bin[35], ob_bin[36], ob_bin[37], ob_bin[38], ob_bin[39], ob_bin[40], ob_bin[41], ob_bin[42], ob_bin[43], ob_bin[44], ob_bin[45], ob_bin[46], ob_bin[47],
-		ob_bin[48], ob_bin[49], ob_bin[50], ob_bin[51], ob_bin[52], ob_bin[53], ob_bin[54], ob_bin[55], ob_bin[56], ob_bin[57], ob_bin[58], ob_bin[59], ob_bin[60], ob_bin[61], ob_bin[62], ob_bin[63],
-		ob_bin[64], ob_bin[65], ob_bin[66], ob_bin[67], ob_bin[68], ob_bin[69], ob_bin[70], ob_bin[71], ob_bin[72], ob_bin[73], ob_bin[74], ob_bin[75], ob_bin[76], ob_bin[77], ob_bin[78], ob_bin[79],
-		ob_bin[80], ob_bin[81], ob_bin[82], ob_bin[83], ob_bin[84], ob_bin[85], ob_bin[86], ob_bin[87], ob_bin[88], ob_bin[89], ob_bin[90], ob_bin[91], ob_bin[92], ob_bin[93], ob_bin[94], ob_bin[95],
-		ob_bin[ 96], ob_bin[ 97], ob_bin[ 98], ob_bin[ 99], ob_bin[100], ob_bin[101], ob_bin[102], ob_bin[103], ob_bin[104], ob_bin[105], ob_bin[106], ob_bin[107], ob_bin[108], ob_bin[109], ob_bin[110], ob_bin[111],
-		ob_bin[112], ob_bin[113], ob_bin[114], ob_bin[115], ob_bin[116], ob_bin[117], ob_bin[118], ob_bin[119], ob_bin[120], ob_bin[121], ob_bin[122], ob_bin[123], ob_bin[124], ob_bin[125], ob_bin[126], ob_bin[127],
-		ob_bin[128], ob_bin[129], ob_bin[130], ob_bin[131], ob_bin[132], ob_bin[133], ob_bin[134], ob_bin[135], ob_bin[136], ob_bin[137], ob_bin[138], ob_bin[139]);
-#endif       
-	// *** /DM/ ***
                     
 #ifndef WIN32
 	tcflush(fd, TCOFLUSH);
 #endif
-	//Tyler Edit
 	info = icarus_info[icarus->device_id];
 	if (info->work_changed)
 	{
 		info->work_changed = false;
 	//
-		//ret = icarus_write(fd, ob_bin, sizeof(ob_bin));
 
 		// skip sending nonce
 /*
@@ -1479,7 +1727,6 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		memcpy(work->data, data, sizeof(work->data));
 
 */
-		unsigned char buf[ICARUS_WRITE_SIZE];
 		memcpy(&buf[3], &work->data[8], ICARUS_WRITE_SIZE-3);
 		// 3 bytes that are iterated in each new work call to scanhash across all devices.
 		memcpy(buf, work->data, 3);
@@ -1494,6 +1741,8 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	applog(LOG_WARNING, "Writing input vector to FPGA: %s", input_str);
 */	
 //		applog(LOG_ERR, "pool nonce %08x, write nonce %08x", *(uint32_t*)work->data, *(uint32_t*)buf);
+//		Tyler Temp
+//		applog(LOG_ERR, "Writing new work for nonce2 0x%08X", *(uint32_t*)work->data);
 
 		ret = icarus_write(fd, buf, ICARUS_WRITE_SIZE);
 	
@@ -1507,38 +1756,31 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		copy_time(&info->work_start, &tv_start);
 		copy_time(&info->prev_hashcount_return, &tv_start);
 		info->prev_hashcount = 0;
+		if (opt_debug) {
+			ob_hex = bin2hex(buf, sizeof(buf));
+			applog(LOG_DEBUG, "Icarus %d sent: %s",
+				icarus->device_id, ob_hex);
+			free(ob_hex);
+		}
 	}
 	else
 		cgtime(&tv_start);
 
-	if (opt_debug) {
-		ob_hex = bin2hex(ob_bin, sizeof(ob_bin));
-		applog(LOG_DEBUG, "Icarus %d sent: %s",
-			icarus->device_id, ob_hex);
-		free(ob_hex);
-	}
 
-	/* Icarus will return 4 bytes (ICARUS_READ_SIZE) nonces or nothing */
+	/* will return bytes (ICARUS_READ_SIZE) messages or nothing */
 	memset(nonce_bin, 0, sizeof(nonce_bin));
+	struct timeval read_start;
+	cgtime(&read_start);
 	ret = icarus_gets(nonce_bin, fd, &tv_finish, thr, info->read_count);
 	
 	if (!ret)
 	{
-	//Tyler Edit
-/*	
-		if (nonce_bin[0] == 1 || nonce_bin[0] == 0xbb)
+		if (0)//nonce_bin[0] == 1 || nonce_bin[0] == 0xbb)
 		{
-			char result_nonce_str[17*3+1];
-			for (int i=0; i<17; i++)
-			{
-				sprintf(result_nonce_str+i*3, "%02X ", nonce_bin[i]);	
-			}
-			result_nonce_str[17*3] = 0;
-			applog(LOG_WARNING, "Received nonce_result: %s", result_nonce_str);
+			display_received_message(nonce_bin);
 		}
-*/		
+		
 	}
-	//
 
 	if (ret == ICA_GETS_ERROR) {
 		do_icarus_close(thr);
@@ -1548,7 +1790,6 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		return 0;
 	}
 
-	// Tyler Edit
 	// This was for the Icarus board. For VCU/BCU/FK33 we decided to return to avoid
 	// time that might be on stale work, etc.
 	//work->blk.nonce = 0xffffffff;
@@ -1556,6 +1797,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 
 	// aborted before becoming idle, get new work
 	if (ret == ICA_GETS_TIMEOUT || ret == ICA_GETS_RESTART) {
+		timersub(&tv_finish, &tv_start, &elapsed);
+		double seconds = (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000); 
+//		applog(LOG_ERR, "Read took %f seconds", seconds);
 		if (info->first_timeout)
 		{
 			disable_inactive_cores_since_work_start(info);
@@ -1572,8 +1816,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			// the following could occur if a number of cores are inactive or misbehaving and therefore our hashrate is really low. If that is the case then we can disable cores that don't produce a nonce within some range of time. 
 			if (seconds > SECONDS_PER_NONCE_RANGE)
 			{
-				update_active_device(info, &info->last_interval_timeout, &tv_finish);
-				copy_time(&info->last_interval_timeout, &tv_finish);
+//		removing for now because technically this shouldn't occur because we return before we are 3/4 of the way through the nonce range. So, if the hashrate is low and no nonces are found, we will still hit this threshold based on estimated hashcount returns.
+		//		update_active_device(info, &info->last_interval_timeout, &tv_finish);
+//				copy_time(&info->last_interval_timeout, &tv_finish);
 			}
 			
 		}
@@ -1616,8 +1861,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		
 		memcpy((char *)&nonce, nonce_tmp, sizeof(nonce_tmp));
 		icarus->result_is_counter = true;
+
 	}
-	else if ((nonce_bin[0] == 0x01) && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
+	else if ((nonce_bin[0] >= 0x00) && (nonce_bin[0] <= 0x03) && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
 	{
 		applog(LOG_INFO, "RECEIVED NONCE RESPONSE");
 		// nonce
@@ -1690,7 +1936,8 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	}
 	else
 	{
-		applog(LOG_ERR, "Unknown message from FPGA. Byte: 0x%01X", nonce_bin[0]);
+		applog(LOG_ERR, "Unknown message from FPGA %d. Byte: 0x%01X", icarus->device_id, nonce_bin[0]);
+		display_received_message(nonce_bin);
 		return 0;
 	}
 
@@ -1709,19 +1956,30 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	//applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d] Job ID: %s, Nonce1: %s, Nonce2: %s, Hs: %f", icarus->device_id, nonce, nonce_d, work->job_id, work->nonce1, work->nonce2, info->Hs);
 	//
 	
-	nonce_found[icarus->device_id]++;
-	nonce_counter++;
 	// *** /DM/ ***
 
 	curr_hw_errors = icarus->hw_errors;
-	// Tyler Edit
 	if (!icarus->result_is_counter)
-	//
 	{
+
+
+		if (nonce < 0xffffff)
+		{
+  			char input_str[sizeof(buf)*2+1];
+			for (int i=0; i<sizeof(buf); i++)
+			{
+				sprintf(input_str+i*2, "%02X", buf[i]);	
+			}
+			input_str[sizeof(buf)*2] = 0;
+			applog(LOG_WARNING, "Found Good Test !!!! low nonce input vector: %s", input_str);
+		}
+		nonce_found[icarus->device_id]++;
+		nonce_counter++;
 		uint64_t real_nonce = ((uint64_t)nonce_d<<32)+nonce;
+		uint32_t nonce2 = *(uint32_t*)work->data;
+		uint32_t disp_nonce2 = nonce2;
 		if (info->expected_cores >= 9)
 		{
-			uint32_t nonce2 = *(uint32_t*)work->data;
 			nonce2 &= 0xffffff;
 			nonce2 = bswap_32(nonce2);
 			real_nonce |= ((uint64_t)htole32(nonce2))<<32;
@@ -1739,10 +1997,11 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			applog(LOG_ERR, "Real Nonce %s", nonce_str);
 */
 		}
-		applog(LOG_WARNING, "VCU1525 %d: nonce %016lx, [core %d]", icarus->device_id, real_nonce, nonce_d);
+		applog(LOG_WARNING, "VCU1525 %d: work 0x%08X,  nonce 0x%016lX, [core %d]", icarus->device_id, disp_nonce2, real_nonce, nonce_d);
 		uint64_t flip_nonce = bswap_64(real_nonce);
 //		applog(LOG_WARNING, "real nonce = 0x%0llX, flip nonce = 0x%0llX", real_nonce, flip_nonce);
 		submit_nonce(thr, work, flip_nonce);
+//		work->force_abandon = true;
 	}
 	was_hw_error = (curr_hw_errors > icarus->hw_errors);
 
@@ -1771,7 +2030,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	
 		hash_count = new_hashcount_since_last_return(info, &tv_finish);
 	
-	//	applog(LOG_ERR, "Core %d update: Hashrate update instance: %u, Previous hashrate: %lu, Elapsed time: %f, Total Hash Count: %08lX, Hash Count: %08X", nonce_d, core_hashrate, info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, (uint32_t)hash_count);
+//		applog(LOG_ERR, "Core %d update: Hashrate update instance: %u, Previous hashrate: %lu, Elapsed time: %f, Total Hash Count: %08lX, Hash Count: %08X, threshold: %08X", nonce_d, core_hashrate, info->prev_hashrate, (double)(elapsed.tv_sec) + ((double)(elapsed.tv_usec))/((double)1000000), info->prev_hashcount, (uint32_t)hash_count, (uint32_t)((double)0xffffffff*0.75));
 	
 		// applog(LOG_WARNING, "Hashrate updated to: %u", info->prev_hashrate);
 		//
@@ -1785,7 +2044,14 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	}
 	else
 	{
-		applog(LOG_DEBUG, "Got old work response!!!!");
+		uint32_t oldWorkId=0;
+		uint32_t workId=0;
+		memcpy(&oldWorkId, &nonce_bin[9], 3);
+		memcpy(&workId, work->data, 3);
+		applog(LOG_DEBUG, "FPGA %d, core %d got old work [0x%08X] response!!!! Current work: 0x%08X", icarus->device_id, nonce_d, oldWorkId, workId);
+		applog(LOG_ERR, "FPGA %d, core %d got old work [0x%08X] response!!!! Current work: 0x%08X", icarus->device_id, nonce_d, oldWorkId, workId);
+		display_received_message(nonce_bin);
+
 		hash_count = get_hashcount_estimate_for_return(info, work, &tv_finish);
 		icarus->result_is_estimate = true;
 	}

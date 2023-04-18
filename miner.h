@@ -1243,6 +1243,7 @@ struct work {
 	struct timeval	tv_work_start;
 	struct timeval	tv_work_found;
 	char		getwork_mode;
+	bool 		force_abandon;
 };
 
 #ifdef USE_MODMINER 

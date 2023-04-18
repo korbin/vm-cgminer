@@ -1302,6 +1302,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 	json_t *config;
 	char *json_error;
 
+	applog(LOG_ERR, "load_config");
 	if (!cnfbuf)
 		cnfbuf = strdup(arg);
 
@@ -2581,8 +2582,8 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 		else
 			outhash = bin2hex(rhash + 4, 4);
 		suffix_string(work->share_diff, diffdisp, 0);
-		sprintf(hashshow, "%s Diff %s/%d%s", outhash, diffdisp, intdiff,
-			work->block? " BLOCK!" : "");
+		sprintf(hashshow, "%s Diff %s/%d%s: Job ID: %s, Nonce: %lu, Nonce2: %u", outhash, diffdisp, intdiff,
+			work->block? " BLOCK!" : "", work->job_id, work->res_nonce, *(uint32_t*)work->data);
 		free(outhash);
 
 		if (opt_worktime) {
@@ -3202,11 +3203,12 @@ static bool stale_work(struct work *work, bool share)
 	if (opt_benchmark)
 		return false;
 
+	/*
 	if (work->work_block != work_block) {
 		applog(LOG_DEBUG, "Work stale due to block mismatch");
 		return true;
 	}
-
+*/
 	/* Technically the rolltime should be correct but some pools
 	 * advertise a broken expire= that is lower than a meaningful
 	 * scantime */
@@ -3227,13 +3229,16 @@ static bool stale_work(struct work *work, bool share)
 
 		same_job = true;
 
+		char pool_id[256];
 		cg_rlock(&pool->data_lock);
+		strcpy(pool_id, pool->swork.job_id);
 		if (strcmp(work->job_id, pool->swork.job_id))
 			same_job = false;
 		cg_runlock(&pool->data_lock);
 
 		if (!same_job) {
-			applog(LOG_DEBUG, "Work stale due to stratum job_id mismatch");
+			//applog(LOG_DEBUG, "Work stale due to stratum job_id mismatch");
+			applog(LOG_DEBUG, "Work stale due to stratum job_id %s mismatch with work job_id %s", pool_id, work->job_id);
 			return true;
 		}
 	}
@@ -5244,6 +5249,28 @@ static inline void thread_reportout(struct thr_info *thr)
 	thr->getwork = true;
 }
 
+double pool_hashrate(struct pool *pool)
+{
+	cg_rlock(&pool->data_lock);
+
+	double target=0;
+	char targetstr[65];
+	for (int i=0;i<32; i++)
+	{
+		target += pow(256,i)*(double)pool->gbt_target[31-i];
+		sprintf(targetstr+i*2, "%02X", pool->gbt_target[i]);
+	}
+	targetstr[64] = 0;
+	applog(LOG_ERR, "For target: %s", targetstr);
+	double diff = pow(2,256)/target;
+//	double diff = pow(2,256)/pow(2,224);
+	cg_runlock(&pool->data_lock);
+
+	double hashrate = total_accepted*diff/total_secs;
+//	applog(LOG_ERR, "Pool hashrate should be: %lf, for diff %lf, target %lf, seconds %lf, accepted %u, submits %f", hashrate, diff, target, total_secs, total_accepted, nonce_counter);
+	return hashrate;
+}
+
 static void hashmeter(int thr_id, struct timeval *diff,
 		      uint64_t hashes_done)
 {
@@ -5255,7 +5282,7 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	static double rolling = 0;
 	double local_mhashes;
 	bool showlog = false;
-	char displayed_hashes[16], displayed_rolling[16];
+	char displayed_hashes[16], displayed_rolling[16], disp_pool_hashes[16];
 	uint64_t dh64, dr64;
 	struct thr_info *thr;
 	// *** deke ***
@@ -5345,6 +5372,8 @@ static void hashmeter(int thr_id, struct timeval *diff,
 
 	suffix_string(dh64, displayed_hashes, 4);
 	suffix_string(dr64, displayed_rolling, 4);
+	double pool_hashes = pool_hashrate(current_pool());
+	suffix_string(pool_hashes, disp_pool_hashes, 4);
 
 	// *** deke ***
 	if(hw_errors == 0)
@@ -5357,9 +5386,9 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	else
 		err2 = ((float)total_rejected / ((float)total_rejected + (float)total_accepted)) * 100;
 
-	sprintf(statusline, "%s(%ds):%s (avg):%sh/s | A:%d  R:%d [%.2f%] S:%d HW:%d [%.2f%]",
+	sprintf(statusline, "%s(%ds):%s (avg):%sh/s Pool: %sh/s | A:%d  R:%d [%.2f%] S:%d HW:%d [%.2f%]",
 		want_per_device_stats ? "ALL " : "",
-		opt_log_interval, displayed_rolling, displayed_hashes,
+		opt_log_interval, displayed_rolling, displayed_hashes, disp_pool_hashes,
 		total_accepted, total_rejected, err2, nonce_counter, hw_errors,  err);
 	// *** /DM/ ***
 
@@ -5381,7 +5410,7 @@ static void stratum_share_result(json_t *val, json_t *res_val, json_t *err_val,
 				 struct stratum_share *sshare)
 {
 	struct work *work = sshare->work;
-	char hashshow[65];
+	char hashshow[165];
 	uint32_t *hash32;
 	char diffdisp[16];
 	int intdiff;
@@ -5389,8 +5418,8 @@ static void stratum_share_result(json_t *val, json_t *res_val, json_t *err_val,
 	hash32 = (uint32_t *)(work->hash);
 	intdiff = floor(work->work_difficulty);
 	suffix_string(work->share_diff, diffdisp, 0);
-	sprintf(hashshow, "%08lx Diff %s/%d%s", (unsigned long)htole32(hash32[6]), diffdisp, intdiff,
-		work->block? " BLOCK!" : "");
+	sprintf(hashshow, "%08lx Diff %s/%d%s: Job ID: %s, Nonce: 0x%016lX, Nonce2: %u", (unsigned long)htole32(hash32[6]), diffdisp, intdiff,
+			work->block? " BLOCK!" : "", work->job_id ? work->job_id : "", bswap_64(work->res_nonce), *(uint32_t*)work->data);
 	share_result(val, res_val, err_val, work, hashshow, false, "");
 }
 
@@ -6064,6 +6093,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	work->longpoll = false;
 	work->getwork_mode = GETWORK_MODE_STRATUM;
 	work->work_block = work_block;
+	work->force_abandon = false;
 	calc_diff(work, 0);
 //	calc_diff(work, work->sdiff);
 
@@ -6183,24 +6213,29 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 		return;
 	}
 */
+	
+	
 	submit_work_async(work, &tv_work_found);
 }
 
 static inline bool abandon_work(struct work *work, struct timeval *wdiff, uint64_t hashes)
 {
-/*
+
 	if (wdiff->tv_sec > opt_scantime)
 	       applog(LOG_ERR, "Abandon work due to scantime.");
-	if ( work->blk.nonce >= MAXTHREADS - hashes)
-	       applog(LOG_ERR, "Abandon work due to blk.nonce.");
-	if ( hashes >= 0xfffffffe )
-	       applog(LOG_ERR, "Abandon work due to hashes.");
-	if (stale_work(work, false))
-	       applog(LOG_ERR, "Abandon work due to stale work.");
-*/
+//	if ( work->force_abandon)
+//	       applog(LOG_ERR, "Abandon work due to force.");
+//	if ( work->blk.nonce >= MAXTHREADS - hashes)
+//	       applog(LOG_ERR, "Abandon work due to blk.nonce.");
+//	if ( hashes >= 0xfffffffe )
+//	       applog(LOG_ERR, "Abandon work due to hashes.");
+//	if (stale_work(work, false))
+//	       applog(LOG_ERR, "Abandon work due to stale work.");
+
 	if (wdiff->tv_sec > opt_scantime ||
 	    work->blk.nonce >= MAXTHREADS - hashes ||
-	    hashes >= 0xfffffffe ||
+	    work->force_abandon || 
+//	    hashes >= 0xfffffffe ||
 	    stale_work(work, false))
 		return true;
 	return false;

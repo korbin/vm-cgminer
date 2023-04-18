@@ -1218,6 +1218,12 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	pool->swork.job_id = malloc(11);
 
 	sprintf(pool->swork.job_id, "%lld", json_integer_value(job_id_val));
+	//
+	// Tyler Temporary
+	//
+	applog(LOG_ERR, "Notified of job_id: %s", pool->swork.job_id);
+	//
+
 	pool->swork.header_len = 360;
 	json_t *header_val = json_object_get(val, "header");
 	const char *header_hex_str = json_string_value(header_val);
@@ -1250,10 +1256,11 @@ static bool parse_target(struct pool *pool, json_t *val)
 	const char *target = json_string_value(target_val);
 
 	cg_wlock(&pool->data_lock);
-	memcpy(pool->gbt_target, target, 32);
+	hex2bin(pool->gbt_target, target, 32);
 	cg_wunlock(&pool->data_lock);
 
 	applog(LOG_DEBUG, "Pool %d target set to %s", pool->pool_no, target);
+	applog(LOG_ERR, "Pool %d target set to %s", pool->pool_no, target);
 
 	return true;
 }
@@ -1587,11 +1594,21 @@ resend:
 		//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\", \"%s\"]}", swork_id++, pool->sessionid);
 		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"ccminer/1.0.0-Radiator\", \"%s\"]}", swork_id++, pool->sessionid);
 	else
+	{
+		if (strstr(pool->stratum_url, "flexpool"))
+		{
+		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\", \"EthereumStratum/1.0.0\"]}", swork_id++);
+//			sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": {\"version\":1,\"agent\":\"vm-miner/1.0.0-IronFish\", \"name\": \"test\", \"publicAddress\": \"%s\",\"extend\":[\"mining.submitted\"]}}", swork_id++, pool->rpc_user);
+		}
+		else
+		{
 		//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\"]}", swork_id++);
 		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"body\": {\"version\":1,\"agent\":\"vm-miner/1.0.0-IronFish\", \"name\": \"test\", \"publicAddress\": \"%s\",\"extend\":[\"mining.submitted\"]}}", swork_id++, pool->rpc_user);
 //	strcpy(s, "{\"id\":0,\"method\":\"mining.subscribe\",\"body\":{\"version\":1,\"agent\":\"BzMiner/v14.1.0\",\"name\":\"cztst\",\"publicAddress\":\"5a2b672bfa6bc68b6e58e717572bcea37b8c87a94249687e55e5dd70535f5b58=5000000000\",\"extend\":[\"mining.submitted\"]}}");
+		}
 			 // *** DMz ***
 
+	}
 	if (__stratum_send(pool, s, strlen(s)) != SEND_OK) {
 		applog(LOG_DEBUG, "Failed to send s in initiate_stratum");
 		goto out;
