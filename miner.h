@@ -1143,7 +1143,7 @@ struct pool {
 	char *sockbuf;
 	size_t sockbuf_size;
 	char *sockaddr_url; /* stripped url used for sockaddr */
-	char *nonce1;
+	char nonce1[11];
 	size_t n1_len;
 	uint32_t nonce2;
 	int n2size;
@@ -1219,7 +1219,7 @@ struct work {
 	char		*nonce2;
 	char		*ntime;
 	double		sdiff;
-	char		*nonce1;
+	char        nonce1[11];
 	uint64_t 	res_nonce;
 
 	bool		gbt;

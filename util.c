@@ -1233,6 +1233,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		goto out;
 	}
 	strcpy(pool->swork.header, header_hex_str);
+    hex2bin(pool->swork.header, pool->nonce1, strlen(pool->nonce1)/2);
 	cg_wunlock(&pool->data_lock);
 
 	if (opt_protocol) {
@@ -1603,7 +1604,7 @@ resend:
 		else
 		{
 		//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\"]}", swork_id++);
-		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"body\": {\"version\":1,\"agent\":\"vm-miner/1.0.0-IronFish\", \"name\": \"test\", \"publicAddress\": \"%s\",\"extend\":[\"mining.submitted\"]}}", swork_id++, pool->rpc_user);
+		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"body\": {\"version\":1,\"agent\":\"vm-cgminer/1.0.0-IronFish\", \"name\": \"test\", \"publicAddress\": \"%s\"}}", swork_id++, pool->rpc_user);
 //	strcpy(s, "{\"id\":0,\"method\":\"mining.subscribe\",\"body\":{\"version\":1,\"agent\":\"BzMiner/v14.1.0\",\"name\":\"cztst\",\"publicAddress\":\"5a2b672bfa6bc68b6e58e717572bcea37b8c87a94249687e55e5dd70535f5b58=5000000000\",\"extend\":[\"mining.submitted\"]}}");
 		}
 			 // *** DMz ***
@@ -1660,12 +1661,6 @@ resend:
 /*	sessionid = get_sessionid(res_val);
 	if (!sessionid)
 		applog(LOG_DEBUG, "Failed to get sessionid in initiate_stratum");
-	nonce1 = json_array_string(res_val, 1);
-	if (!nonce1) {
-		applog(LOG_INFO, "Failed to get nonce1 in initiate_stratum");
-		free(sessionid);
-		goto out;
-	}
 	n2size = json_integer_value(json_array_get(res_val, 2));
 	if (!n2size) {
 		applog(LOG_INFO, "Failed to get n2size in initiate_stratum");
@@ -1676,8 +1671,6 @@ resend:
 
 	cg_wlock(&pool->data_lock);
 	pool->sessionid = sessionid;
-	pool->nonce1 = nonce1;
-	pool->n1_len = strlen(nonce1) / 2;
 	pool->n2size = n2size;
 
 	cg_wunlock(&pool->data_lock);
@@ -1685,6 +1678,15 @@ resend:
 //	if (sessionid)
 //		applog(LOG_DEBUG, "Pool %d stratum session id: %s", pool->pool_no, pool->sessionid);
 
+	json_t *nonce1_val = json_object_get(res_val, "xn");
+	if (!nonce1) {
+		applog(LOG_INFO, "Failed to get nonce1 in initiate_stratum");
+		free(sessionid);
+		goto out;
+	}
+    char *nonce1 = json_string_value(nonce1_val);
+	strcpy(pool->nonce1, nonce1);
+	pool->n1_len = strlen(nonce1) / 2;
 	successful_connect = true;
 	ret = true;
 out:

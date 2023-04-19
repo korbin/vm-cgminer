@@ -68,6 +68,8 @@
 #	define USE_FPGA
 #endif
 
+void calc_midstate(struct work *work, uint8_t *midstate);
+
 struct strategies strategies[] = {
 	{ "Failover" },
 	{ "Round Robin" },
@@ -3769,7 +3771,15 @@ void sha512_256_32(unsigned char *in, unsigned char *out)
 		*out++ = hash1[i];
 	}	
 }
-// *** /DM/ ***
+
+void calc_midstate(struct work *work, uint8_t *midstate)
+{
+	blake3_hasher hasher;
+	blake3_hasher_init(&hasher);
+	blake3_hasher_update(&hasher, work->data, 128);
+	// Finalize the hash. BLAKE3_OUT_LEN is the default output length, 32 bytes.
+	blake3_hasher_finalize(&hasher, midstate, BLAKE3_OUT_LEN);
+}
 
 static void regen_hash(struct work *work)
 {
@@ -3929,7 +3939,7 @@ static void *submit_work_thread(void *userdata)
 		sshare->id = swork_id++;
 		mutex_unlock(&sshare_lock);
 
-		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\"}, \"id\": %d, \"method\": \"mining.submit\"}",
+		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\", ,"graffiti":"dekeminer"}, \"id\": %d, \"method\": \"mining.submit\"}",
 			work->job_id, noncehex, sshare->id);
 		free(noncehex);
 
@@ -6068,17 +6078,18 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	/* Use intermediate lock to update the one pool variable */
 	cg_ilock(&pool->data_lock);
 
-	*(uint32_t *)work->data = htole32(pool->nonce2);
+	*(uint32_t *)&work->data[180-8] = htole32(pool->nonce2);
 	
 	pool->nonce2++;
 	/* Downgrade to a read lock to read off the pool variables */
 	cg_dlock(&pool->data_lock);
 
 	/* Copy parameters required for share submission */
+    strcpy(work->nonce1, pool->nonce1);
 	work->job_id = strdup(pool->swork.job_id);
 	memcpy(work->target, pool->gbt_target, 32);
 	/* Convert hex data to binary data for work */
-	if (unlikely(!hex2bin(&work->data[8], &pool->swork.header[16], 172)))
+	if (unlikely(!hex2bin(work->data, pool->swork.header, 172)))
 		quit(1, "Failed to convert header to data in gen_stratum_work");
 	cg_runlock(&pool->data_lock);
 
@@ -6093,6 +6104,8 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	work->getwork_mode = GETWORK_MODE_STRATUM;
 	work->work_block = work_block;
 	work->force_abandon = false;
+
+    calc_midstate(work, work->midstate);
 	calc_diff(work, 0);
 //	calc_diff(work, work->sdiff);
 
