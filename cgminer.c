@@ -68,7 +68,7 @@
 #	define USE_FPGA
 #endif
 
-void calc_midstate(struct work *work, uint8_t *midstate);
+void calc_midstate(struct work *work);
 
 struct strategies strategies[] = {
 	{ "Failover" },
@@ -1496,19 +1496,6 @@ uint32_t ztex_checkNonce(struct work *work, uint32_t nonce)
 	return htonl(hash2_32[7]);
 }
 
-static void calc_midstate(struct work *work)
-{
-	unsigned char data[64];
-	uint32_t *data32 = (uint32_t *)data;
-	sha2_context ctx;
-
-	flip64(data32, work->data);
-	sha2_starts(&ctx);
-	sha2_update(&ctx, data, 64);
-	memcpy(work->midstate, ctx.state, 32);
-	endian_flip32(work->midstate, work->midstate);
-}
-
 static struct work *make_work(void)
 {
 	struct work *work = calloc(1, sizeof(struct work));
@@ -1531,7 +1518,6 @@ void clean_work(struct work *work)
 	free(work->nonce2);
 	free(work->ntime);
 	free(work->gbt_coinbase);
-	free(work->nonce1);
 	memset(work, 0, sizeof(struct work));
 }
 
@@ -3116,7 +3102,7 @@ void __copy_work(struct work *work, struct work *base_work)
 	if (base_work->job_id)
 		work->job_id = strdup(base_work->job_id);
 	if (base_work->nonce1)
-		work->nonce1 = strdup(base_work->nonce1);
+		strcpy(work->nonce1, base_work->nonce1);
 	if (base_work->nonce2)
 		work->nonce2 = strdup(base_work->nonce2);
 	if (base_work->ntime)
@@ -3772,13 +3758,13 @@ void sha512_256_32(unsigned char *in, unsigned char *out)
 	}	
 }
 
-void calc_midstate(struct work *work, uint8_t *midstate)
+void calc_midstate(struct work *work)
 {
 	blake3_hasher hasher;
 	blake3_hasher_init(&hasher);
 	blake3_hasher_update(&hasher, work->data, 128);
 	// Finalize the hash. BLAKE3_OUT_LEN is the default output length, 32 bytes.
-	blake3_hasher_finalize(&hasher, midstate, BLAKE3_OUT_LEN);
+	blake3_hasher_finalize(&hasher, work->midstate, BLAKE3_OUT_LEN);
 }
 
 static void regen_hash(struct work *work)
@@ -3939,7 +3925,7 @@ static void *submit_work_thread(void *userdata)
 		sshare->id = swork_id++;
 		mutex_unlock(&sshare_lock);
 
-		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\", ,"graffiti":"dekeminer"}, \"id\": %d, \"method\": \"mining.submit\"}",
+		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\", \"graffiti\":\"dekeminer\"}, \"id\": %d, \"method\": \"mining.submit\"}",
 			work->job_id, noncehex, sshare->id);
 		free(noncehex);
 
@@ -6085,7 +6071,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	cg_dlock(&pool->data_lock);
 
 	/* Copy parameters required for share submission */
-    strcpy(work->nonce1, pool->nonce1);
+    	strcpy(work->nonce1, pool->nonce1);
 	work->job_id = strdup(pool->swork.job_id);
 	memcpy(work->target, pool->gbt_target, 32);
 	/* Convert hex data to binary data for work */
@@ -6105,7 +6091,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	work->work_block = work_block;
 	work->force_abandon = false;
 
-    calc_midstate(work, work->midstate);
+    	calc_midstate(work);
 	calc_diff(work, 0);
 //	calc_diff(work, work->sdiff);
 

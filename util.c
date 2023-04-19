@@ -1233,7 +1233,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		goto out;
 	}
 	strcpy(pool->swork.header, header_hex_str);
-    hex2bin(pool->swork.header, pool->nonce1, strlen(pool->nonce1)/2);
+    	hex2bin(pool->swork.header, pool->nonce1, strlen(pool->nonce1)/2);
 	cg_wunlock(&pool->data_lock);
 
 	if (opt_protocol) {
@@ -1578,7 +1578,7 @@ void suspend_stratum(struct pool *pool)
 bool initiate_stratum(struct pool *pool)
 {
 	bool ret = false, recvd = false, noresume = false, sockd = false;
-	char s[RBUFSIZE], *sret = NULL, *nonce1, *sessionid;
+	char s[RBUFSIZE], *sret = NULL, *sessionid;
 	json_t *val = NULL, *res_val, *err_val;
 	json_error_t err;
 	int n2size;
@@ -1679,12 +1679,13 @@ resend:
 //		applog(LOG_DEBUG, "Pool %d stratum session id: %s", pool->pool_no, pool->sessionid);
 
 	json_t *nonce1_val = json_object_get(res_val, "xn");
-	if (!nonce1) {
+	if (!nonce1_val) {
 		applog(LOG_INFO, "Failed to get nonce1 in initiate_stratum");
 		free(sessionid);
 		goto out;
 	}
-    char *nonce1 = json_string_value(nonce1_val);
+    	const char *nonce1 = json_string_value(nonce1_val);
+    	
 	strcpy(pool->nonce1, nonce1);
 	pool->n1_len = strlen(nonce1) / 2;
 	successful_connect = true;
@@ -1713,8 +1714,8 @@ out:
 			* presence of the sessionid parameter. */
 			cg_wlock(&pool->data_lock);
 			free(pool->sessionid);
-			free(pool->nonce1);
-			pool->sessionid = pool->nonce1 = NULL;
+			pool->sessionid = NULL;
+			pool->nonce1[0] = 0;
 			cg_wunlock(&pool->data_lock);
 
 			applog(LOG_DEBUG, "Failed to resume stratum, trying afresh");
