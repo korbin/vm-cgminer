@@ -1015,7 +1015,9 @@ static bool icarus_detect_one(const char *devpath)
 		"00000000000000000000000000000000"
 		"0000000000000000000000000000000";
 */
-	const char golden_nonce[] = "bb00000000000000000000000004000000";
+
+	const char golden_nonce[] = "011200000000000000c100001100062034";
+//	const char golden_nonce[] = "bb00000000000000000000000004000000";
 	const uint32_t golden_nonce_val = 0x00000000;	
 	
 	unsigned char ob_bin[ICARUS_WRITE_SIZE], nonce_bin[ICARUS_READ_SIZE];
@@ -1073,13 +1075,17 @@ static bool icarus_detect_one(const char *devpath)
 	applog(LOG_ERR, "Ending test with 0x%02X message.", nonce_bin[0]);
 	
 	uint8_t device_type = nonce_bin[0];
-	applog(LOG_ERR, "Device detected of type %u", device_type);
-	if (device_type > 2)
+	if (device_type < 3)
+		applog(LOG_ERR, "Device detected of type %u", device_type);
+	else
+	{
+		applog(LOG_WARNING, "Device not detected. Defaulting to BCU.");
+
 		device_type = 1;
+	}
 
 	int cainsmore_clock_speed = 70;		
 	get_clocks(this_option_offset, &cainsmore_clock_speed, device_type);	
-
 
 	int cainsmore_ret;
 	if (device_type == 2)
@@ -1092,9 +1098,11 @@ static bool icarus_detect_one(const char *devpath)
 	icarus_close(fd);
 
 	nonce_hex = bin2hex(nonce_bin, sizeof(nonce_bin));
+	nonce_hex[2] = '1';
+	nonce_hex[3] = '2';
 	// *** deke ***	
-	//if (strncmp(nonce_hex, golden_nonce, 8)) {
-	if (nonce_bin[0] != 0xbb) {// && strncmp(&nonce_hex[4], &golden_nonce[4], 30)) {
+	if (strncmp(nonce_hex, golden_nonce, 34)) {
+//	if (nonce_bin[0] != 0xbb) {// && strncmp(&nonce_hex[4], &golden_nonce[4], 30)) {
 		applog(LOG_ERR,
 			//"Icarus Detect: "
 			"Xilinx VCU1525 Detect: "
@@ -1209,7 +1217,7 @@ static bool icarus_detect_one(const char *devpath)
 	for (int i = 1; i < MAX_CORES; ++i)
 		memcpy(&info->core_history[i].samples[0], &info->core_history[0].samples[0], sizeof(struct CORE_HISTORY_SAMPLE));
 
-	if (nonce_bin[0] == 0xbb)	
+	if (nonce_bin[0] == 0xbb || nonce_bin[0] < 3)	
 	{
 		info->expected_cores = nonce_bin[1];
 		applog(LOG_ERR, "Bitstream is for %d cores.", info->expected_cores);
@@ -1306,10 +1314,10 @@ void disable_core(struct ICARUS_INFO *info, uint8_t core_num)
 		return;
 
 	if (info->active_core_count == 0)
-		applog(LOG_ERR, "FPGA %d: Active core count (%u) underrun for expected_cores: %u, enabled_cores: %lu, trying to disable core %u", info->device_id, info->active_core_count, info->expected_cores, info->enabled_cores, core_num);
+		applog(LOG_ERR, "FPGA %d: Active core count (%u) underflow for expected_cores: %u, enabled_cores: %lu, trying to disable core %u", info->device_id, info->active_core_count, info->expected_cores, info->enabled_cores, core_num);
 	info->active_core_count --; 
 
-	info->enabled_cores &= ~(0x1 << core_num);
+	info->enabled_cores &= ~((uint64_t)0x1 << core_num);
 }
 
 void enable_core(struct ICARUS_INFO *info, uint8_t core_num)
@@ -1320,7 +1328,7 @@ void enable_core(struct ICARUS_INFO *info, uint8_t core_num)
 
 	info->active_core_count ++;
 	if (info->active_core_count > info->expected_cores)
-		applog(LOG_ERR, "FPGA %d: Active core count (%u) overrun for expected_cores: %u, enabled_cores: %lu, trying to enable core %u", info->device_id, info->active_core_count, info->expected_cores, info->enabled_cores, core_num);
+		applog(LOG_ERR, "FPGA %d: Active core count (%u) overflow for expected_cores: %u, enabled_cores: %016lX, trying to enable core %u", info->device_id, info->active_core_count, info->expected_cores, info->enabled_cores, core_num);
 	info->enabled_cores |= (uint64_t)0x1 << core_num;
 	if (core_num + 1 > info->expected_cores)
 		info->expected_cores = core_num + 1;
@@ -1996,8 +2004,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	curr_hw_errors = icarus->hw_errors;
 	if (!icarus->result_is_counter)
 	{
-
-
+		/*
 		if (nonce < 0xffffff)
 		{
   			char input_str[sizeof(buf)*2+1];
@@ -2008,6 +2015,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			input_str[sizeof(buf)*2] = 0;
 			applog(LOG_WARNING, "Found Good Test !!!! low nonce input vector: %s", input_str);
 		}
+		*/
 		nonce_found[icarus->device_id]++;
 		nonce_counter++;
 		uint64_t real_nonce = ((uint64_t)nonce_d<<32)+nonce;

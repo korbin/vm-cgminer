@@ -2165,7 +2165,6 @@ static void curses_print_devstatus(int thr_id)
       err = (((float)cgpu->hw_errors / (float)nonce_found[cgpu->device_id]) * 100);
 
   //wprintw(statuswin, "%6sh/s | %dMHz | %.0f %.0f %.0f %.0fC | %d %d %d %dmV | A:%*d R:%*d S:%d HW:%*d [%.2f%]",
-  //Tyler Edit debug
 /*  wprintw(statuswin, "%6sh/s | %f total secs | %f thread hashes | %lf total hashes | R:%*d S:%d HW:%*d [%.2f%]",
     displayed_hashes,
 	temp_total_secs,	
@@ -5261,7 +5260,7 @@ double pool_hashrate(struct pool *pool)
 		sprintf(targetstr+i*2, "%02X", pool->gbt_target[i]);
 	}
 	targetstr[64] = 0;
-	applog(LOG_ERR, "For target: %s", targetstr);
+//	applog(LOG_ERR, "For target: %s", targetstr);
 	double diff = pow(2,256)/target;
 //	double diff = pow(2,256)/pow(2,224);
 	cg_runlock(&pool->data_lock);

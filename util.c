@@ -1221,7 +1221,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	//
 	// Tyler Temporary
 	//
-	applog(LOG_ERR, "Notified of job_id: %s", pool->swork.job_id);
+//	applog(LOG_ERR, "Notified of job_id: %s", pool->swork.job_id);
 	//
 
 	pool->swork.header_len = 360;
