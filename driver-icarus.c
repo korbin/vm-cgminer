@@ -54,6 +54,8 @@
 #include "elist.h"
 #include "fpgautils.h"
 
+void display_received_message(uint8_t *nonce_bin);
+
 // *** deke ***
 // The serial I/O speed - Linux uses a define 'B115200' in bits/termios.h
 #define ICARUS_IO_SPEED 3000000 
@@ -1033,17 +1035,48 @@ static bool icarus_detect_one(const char *devpath)
 		return false;
 	}
 
+
+	memset(nonce_bin, 0, sizeof(nonce_bin));
+	int result=17;
+	applog(LOG_ERR, "Emptying Serial port of following messages:");
+	while (result == 17)
+	{
+		result = icarus_gets(nonce_bin, fd, &tv_finish, NULL, 1);
+		if (result == 17)
+			display_received_message(nonce_bin);
+	}
+	applog(LOG_ERR, "Emptied Serial Port");
+	
+/*
+// use to test whether we can handle voltage messages
+// to force a delay and then we should get a voltage message
+//
+#ifdef WIN32
+	Sleep(6000);
+#else
+	sleep(6);
+#endif
+*/
 	hex2bin(ob_bin, golden_ob, sizeof(ob_bin));
 	icarus_write(fd, ob_bin, sizeof(ob_bin));
 	cgtime(&tv_start);
 
 	memset(nonce_bin, 0, sizeof(nonce_bin));
-	icarus_gets(nonce_bin, fd, &tv_finish, NULL, 6);
+	result=17;
+	applog(LOG_ERR, "Checking Serial port for test response. Following messages received:");
+	nonce_bin[0] = 0xaa;
+	while (result == 17 && nonce_bin[0]==0xaa)
+	{
+		result = icarus_gets(nonce_bin, fd, &tv_finish, NULL, 6);
+		display_received_message(nonce_bin);
+	}
+	applog(LOG_ERR, "Ending test with 0x%02X message.", nonce_bin[0]);
 	
 	uint8_t device_type = nonce_bin[0];
 	applog(LOG_ERR, "Device detected of type %u", device_type);
 	if (device_type > 2)
 		device_type = 1;
+
 	int cainsmore_clock_speed = 70;		
 	get_clocks(this_option_offset, &cainsmore_clock_speed, device_type);	
 
