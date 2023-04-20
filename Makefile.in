@@ -92,15 +92,20 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = cgminer$(EXEEXT)
-@HAS_SCRYPT_TRUE@am__append_1 = scrypt.c scrypt.h
-@NEED_FPGAUTILS_TRUE@am__append_2 = fpgautils.c fpgautils.h
-@NEED_USBUTILS_C_TRUE@am__append_3 = usbutils.c
-@HAS_BFLSC_TRUE@am__append_4 = driver-bflsc.c
-@HAS_BITFORCE_TRUE@am__append_5 = driver-bitforce.c
-@HAS_ICARUS_TRUE@am__append_6 = driver-icarus.c
-@HAS_AVALON_TRUE@am__append_7 = driver-avalon.c driver-avalon.h
-@HAS_MODMINER_TRUE@am__append_8 = driver-modminer.c
-@HAS_ZTEX_TRUE@am__append_9 = driver-ztex.c libztex.c libztex.h
+#cgminer_SOURCES	+= blake3/blake3_sse2_x86-64_windows_gnu.S blake3/blake3_sse41_x86-64_windows_gnu.S blake3/blake3_avx2_x86-64_windows_gnu.S \
+#    blake3/blake3_avx512_x86-64_windows_gnu.S
+@HAVE_WINDOWS_FALSE@am__append_1 = blake3/blake3_sse2_x86-64_unix.S blake3/blake3_sse41_x86-64_unix.S blake3/blake3_avx2_x86-64_unix.S \
+@HAVE_WINDOWS_FALSE@    blake3/blake3_avx512_x86-64_unix.S
+
+@HAS_SCRYPT_TRUE@am__append_2 = scrypt.c scrypt.h
+@NEED_FPGAUTILS_TRUE@am__append_3 = fpgautils.c fpgautils.h
+@NEED_USBUTILS_C_TRUE@am__append_4 = usbutils.c
+@HAS_BFLSC_TRUE@am__append_5 = driver-bflsc.c
+@HAS_BITFORCE_TRUE@am__append_6 = driver-bitforce.c
+@HAS_ICARUS_TRUE@am__append_7 = driver-icarus.c
+@HAS_AVALON_TRUE@am__append_8 = driver-avalon.c driver-avalon.h
+@HAS_MODMINER_TRUE@am__append_9 = driver-modminer.c
+@HAS_ZTEX_TRUE@am__append_10 = driver-ztex.c libztex.c libztex.h
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/00gnulib.m4 \
@@ -133,7 +138,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am__cgminer_SOURCES_DIST = cgminer.c elist.h miner.h compat.h \
 	bench_block.h util.c util.h uthash.h logging.h sha2.c sha2.h \
 	api.c usbutils.h blake3/blake3.c blake3/blake3_dispatch.c \
-	blake3/blake3_portable.c blake3/blake3_sse2_x86-64_unix.S \
+	blake3/blake3_portable.c blake3-dedmaroz.c \
+	blake3/blake3_sse2_x86-64_unix.S \
 	blake3/blake3_sse41_x86-64_unix.S \
 	blake3/blake3_avx2_x86-64_unix.S \
 	blake3/blake3_avx512_x86-64_unix.S logging.c driver-opencl.h \
@@ -142,30 +148,32 @@ am__cgminer_SOURCES_DIST = cgminer.c elist.h miner.h compat.h \
 	fpgautils.h usbutils.c driver-bflsc.c driver-bitforce.c \
 	driver-icarus.c driver-avalon.c driver-avalon.h \
 	driver-modminer.c driver-ztex.c libztex.c libztex.h
-@HAS_SCRYPT_TRUE@am__objects_1 = cgminer-scrypt.$(OBJEXT)
-@NEED_FPGAUTILS_TRUE@am__objects_2 = cgminer-fpgautils.$(OBJEXT)
-@NEED_USBUTILS_C_TRUE@am__objects_3 = cgminer-usbutils.$(OBJEXT)
-@HAS_BFLSC_TRUE@am__objects_4 = cgminer-driver-bflsc.$(OBJEXT)
-@HAS_BITFORCE_TRUE@am__objects_5 = cgminer-driver-bitforce.$(OBJEXT)
-@HAS_ICARUS_TRUE@am__objects_6 = cgminer-driver-icarus.$(OBJEXT)
-@HAS_AVALON_TRUE@am__objects_7 = cgminer-driver-avalon.$(OBJEXT)
-@HAS_MODMINER_TRUE@am__objects_8 = cgminer-driver-modminer.$(OBJEXT)
-@HAS_ZTEX_TRUE@am__objects_9 = cgminer-driver-ztex.$(OBJEXT) \
+@HAVE_WINDOWS_FALSE@am__objects_1 =  \
+@HAVE_WINDOWS_FALSE@	cgminer-blake3_sse2_x86-64_unix.$(OBJEXT) \
+@HAVE_WINDOWS_FALSE@	cgminer-blake3_sse41_x86-64_unix.$(OBJEXT) \
+@HAVE_WINDOWS_FALSE@	cgminer-blake3_avx2_x86-64_unix.$(OBJEXT) \
+@HAVE_WINDOWS_FALSE@	cgminer-blake3_avx512_x86-64_unix.$(OBJEXT)
+@HAS_SCRYPT_TRUE@am__objects_2 = cgminer-scrypt.$(OBJEXT)
+@NEED_FPGAUTILS_TRUE@am__objects_3 = cgminer-fpgautils.$(OBJEXT)
+@NEED_USBUTILS_C_TRUE@am__objects_4 = cgminer-usbutils.$(OBJEXT)
+@HAS_BFLSC_TRUE@am__objects_5 = cgminer-driver-bflsc.$(OBJEXT)
+@HAS_BITFORCE_TRUE@am__objects_6 = cgminer-driver-bitforce.$(OBJEXT)
+@HAS_ICARUS_TRUE@am__objects_7 = cgminer-driver-icarus.$(OBJEXT)
+@HAS_AVALON_TRUE@am__objects_8 = cgminer-driver-avalon.$(OBJEXT)
+@HAS_MODMINER_TRUE@am__objects_9 = cgminer-driver-modminer.$(OBJEXT)
+@HAS_ZTEX_TRUE@am__objects_10 = cgminer-driver-ztex.$(OBJEXT) \
 @HAS_ZTEX_TRUE@	cgminer-libztex.$(OBJEXT)
 am_cgminer_OBJECTS = cgminer-cgminer.$(OBJEXT) cgminer-util.$(OBJEXT) \
 	cgminer-sha2.$(OBJEXT) cgminer-api.$(OBJEXT) \
 	cgminer-blake3.$(OBJEXT) cgminer-blake3_dispatch.$(OBJEXT) \
 	cgminer-blake3_portable.$(OBJEXT) \
-	cgminer-blake3_sse2_x86-64_unix.$(OBJEXT) \
-	cgminer-blake3_sse41_x86-64_unix.$(OBJEXT) \
-	cgminer-blake3_avx2_x86-64_unix.$(OBJEXT) \
-	cgminer-blake3_avx512_x86-64_unix.$(OBJEXT) \
+	cgminer-blake3-dedmaroz.$(OBJEXT) $(am__objects_1) \
 	cgminer-logging.$(OBJEXT) cgminer-driver-opencl.$(OBJEXT) \
 	cgminer-ocl.$(OBJEXT) cgminer-findnonce.$(OBJEXT) \
-	cgminer-adl.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9)
+	cgminer-adl.$(OBJEXT) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
+	$(am__objects_10)
 cgminer_OBJECTS = $(am_cgminer_OBJECTS)
 am__DEPENDENCIES_1 =
 cgminer_DEPENDENCIES = $(am__DEPENDENCIES_1) lib/libgnu.a \
@@ -216,7 +224,9 @@ DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/cgminer-adl.Po \
-	./$(DEPDIR)/cgminer-api.Po ./$(DEPDIR)/cgminer-blake3.Po \
+	./$(DEPDIR)/cgminer-api.Po \
+	./$(DEPDIR)/cgminer-blake3-dedmaroz.Po \
+	./$(DEPDIR)/cgminer-blake3.Po \
 	./$(DEPDIR)/cgminer-blake3_avx2_x86-64_unix.Po \
 	./$(DEPDIR)/cgminer-blake3_avx512_x86-64_unix.Po \
 	./$(DEPDIR)/cgminer-blake3_dispatch.Po \
@@ -605,6 +615,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 version_info = @version_info@
+NEED_USBUTILS_C = FALSE
 ACLOCAL_AMFLAGS = -I m4
 @WANT_JANSSON_FALSE@JANSSON_INCLUDES = 
 @WANT_JANSSON_TRUE@JANSSON_INCLUDES = -I$(top_srcdir)/compat/jansson
@@ -630,7 +641,9 @@ cgminer_LDADD = $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
 @HAVE_WINDOWS_FALSE@	$(ADL_CPPFLAGS)
 @HAVE_WINDOWS_TRUE@cgminer_CPPFLAGS = -I$(top_builddir)/lib \
 @HAVE_WINDOWS_TRUE@	-I$(top_srcdir)/lib @OPENCL_FLAGS@ \
-@HAVE_WINDOWS_TRUE@	@LIBUSB_CFLAGS@ $(ADL_CPPFLAGS)
+@HAVE_WINDOWS_TRUE@	@LIBUSB_CFLAGS@ -DBLAKE3_NO_SSE2 \
+@HAVE_WINDOWS_TRUE@	-DBLAKE3_NO_SSE41 -DBLAKE3_NO_AVX2 \
+@HAVE_WINDOWS_TRUE@	-DBLAKE3_NO_AVX512 $(ADL_CPPFLAGS)
 
 # common sources
 
@@ -641,15 +654,12 @@ cgminer_LDADD = $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
 cgminer_SOURCES := cgminer.c elist.h miner.h compat.h bench_block.h \
 	util.c util.h uthash.h logging.h sha2.c sha2.h api.c \
 	usbutils.h blake3/blake3.c blake3/blake3_dispatch.c \
-	blake3/blake3_portable.c blake3/blake3_sse2_x86-64_unix.S \
-	blake3/blake3_sse41_x86-64_unix.S \
-	blake3/blake3_avx2_x86-64_unix.S \
-	blake3/blake3_avx512_x86-64_unix.S logging.c driver-opencl.h \
-	driver-opencl.c ocl.c ocl.h findnonce.c findnonce.h adl.c \
-	adl.h adl_functions.h *.cl $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_4) $(am__append_5) \
-	$(am__append_6) $(am__append_7) $(am__append_8) \
-	$(am__append_9)
+	blake3/blake3_portable.c blake3-dedmaroz.c $(am__append_1) \
+	logging.c driver-opencl.h driver-opencl.c ocl.c ocl.h \
+	findnonce.c findnonce.h adl.c adl.h adl_functions.h *.cl \
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8) $(am__append_9) $(am__append_10)
 @HAS_MODMINER_TRUE@bitstreamsdir = $(bindir)/bitstreams
 @HAS_ZTEX_TRUE@bitstreamsdir = $(bindir)/bitstreams
 @HAS_MODMINER_TRUE@dist_bitstreams_DATA = $(top_srcdir)/bitstreams/*
@@ -797,6 +807,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgminer-adl.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgminer-api.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgminer-blake3-dedmaroz.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgminer-blake3.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgminer-blake3_avx2_x86-64_unix.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgminer-blake3_avx512_x86-64_unix.Po@am__quote@ # am--include-marker
@@ -1009,6 +1020,20 @@ cgminer-blake3_portable.obj: blake3/blake3_portable.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='blake3/blake3_portable.c' object='cgminer-blake3_portable.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cgminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cgminer-blake3_portable.obj `if test -f 'blake3/blake3_portable.c'; then $(CYGPATH_W) 'blake3/blake3_portable.c'; else $(CYGPATH_W) '$(srcdir)/blake3/blake3_portable.c'; fi`
+
+cgminer-blake3-dedmaroz.o: blake3-dedmaroz.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cgminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cgminer-blake3-dedmaroz.o -MD -MP -MF $(DEPDIR)/cgminer-blake3-dedmaroz.Tpo -c -o cgminer-blake3-dedmaroz.o `test -f 'blake3-dedmaroz.c' || echo '$(srcdir)/'`blake3-dedmaroz.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/cgminer-blake3-dedmaroz.Tpo $(DEPDIR)/cgminer-blake3-dedmaroz.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='blake3-dedmaroz.c' object='cgminer-blake3-dedmaroz.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cgminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cgminer-blake3-dedmaroz.o `test -f 'blake3-dedmaroz.c' || echo '$(srcdir)/'`blake3-dedmaroz.c
+
+cgminer-blake3-dedmaroz.obj: blake3-dedmaroz.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cgminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cgminer-blake3-dedmaroz.obj -MD -MP -MF $(DEPDIR)/cgminer-blake3-dedmaroz.Tpo -c -o cgminer-blake3-dedmaroz.obj `if test -f 'blake3-dedmaroz.c'; then $(CYGPATH_W) 'blake3-dedmaroz.c'; else $(CYGPATH_W) '$(srcdir)/blake3-dedmaroz.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/cgminer-blake3-dedmaroz.Tpo $(DEPDIR)/cgminer-blake3-dedmaroz.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='blake3-dedmaroz.c' object='cgminer-blake3-dedmaroz.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cgminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cgminer-blake3-dedmaroz.obj `if test -f 'blake3-dedmaroz.c'; then $(CYGPATH_W) 'blake3-dedmaroz.c'; else $(CYGPATH_W) '$(srcdir)/blake3-dedmaroz.c'; fi`
 
 cgminer-logging.o: logging.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(cgminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cgminer-logging.o -MD -MP -MF $(DEPDIR)/cgminer-logging.Tpo -c -o cgminer-logging.o `test -f 'logging.c' || echo '$(srcdir)/'`logging.c
@@ -1584,6 +1609,7 @@ distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 		-rm -f ./$(DEPDIR)/cgminer-adl.Po
 	-rm -f ./$(DEPDIR)/cgminer-api.Po
+	-rm -f ./$(DEPDIR)/cgminer-blake3-dedmaroz.Po
 	-rm -f ./$(DEPDIR)/cgminer-blake3.Po
 	-rm -f ./$(DEPDIR)/cgminer-blake3_avx2_x86-64_unix.Po
 	-rm -f ./$(DEPDIR)/cgminer-blake3_avx512_x86-64_unix.Po
@@ -1657,6 +1683,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -rf $(top_srcdir)/autom4te.cache
 		-rm -f ./$(DEPDIR)/cgminer-adl.Po
 	-rm -f ./$(DEPDIR)/cgminer-api.Po
+	-rm -f ./$(DEPDIR)/cgminer-blake3-dedmaroz.Po
 	-rm -f ./$(DEPDIR)/cgminer-blake3.Po
 	-rm -f ./$(DEPDIR)/cgminer-blake3_avx2_x86-64_unix.Po
 	-rm -f ./$(DEPDIR)/cgminer-blake3_avx512_x86-64_unix.Po

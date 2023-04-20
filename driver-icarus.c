@@ -61,7 +61,7 @@ void display_received_message(uint8_t *nonce_bin);
 #define ICARUS_IO_SPEED 3000000 
 
 // The size of a successful nonce read
-#define ICARUS_WRITE_SIZE 79
+#define ICARUS_WRITE_SIZE 76
 
 // The size of a successful nonce read
 #define ICARUS_READ_SIZE 17
@@ -350,7 +350,9 @@ static bool cairnsmore_send_cmd_cvp(int fd, uint8_t cmd, uint16_t data, bool pro
 	freq = (data * 5) / 2;
 	unsigned char pll[ICARUS_WRITE_SIZE] = { 0xaa,0xaa,0xaa,0xaa,0x12,0x08,0x00,0x85,0xed,0xf7,0xff,0x7a,0xbb,0xbb,0xbb,0xbb,
 							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 	
 	if(freq < 425) // 400 MHz
 	{
@@ -465,7 +467,9 @@ static bool cairnsmore_send_cmd_fk33(int fd, uint8_t cmd, uint16_t data, bool pr
 	freq = (data * 5) / 2;
 	unsigned char pll[ICARUS_WRITE_SIZE] = { 0xaa,0xaa,0xaa,0xaa,0x12,0x08,0x00,0x85,0x00,0x82,0x00,0x00,0xbb,0xbb,0xbb,0xbb,
 							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 	
 	if(freq < 425) // 400 MHz 
 	{		
@@ -579,7 +583,9 @@ static bool cairnsmore_send_cmd_bcu(int fd, uint8_t cmd, uint16_t data, bool pro
 	freq = (data * 5) / 2;
 	unsigned char pll[ICARUS_WRITE_SIZE] = { 0xaa,0xaa,0xaa,0xaa,0x12,0x08,0x00,0x85,0xed,0xf7,0xff,0x7a,0xbb,0xbb,0xbb,0xbb,
 							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+							   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 	
 	if(freq < 425) // 400 MHz 
 	{		
@@ -1055,6 +1061,9 @@ static bool icarus_detect_one(const char *devpath)
 	applog(LOG_ERR, "Ending test with 0x%02X message.", nonce_bin[0]);
 	
 	uint8_t device_type = nonce_bin[0];
+	if (device_type == 0xbb)
+		device_type = nonce_bin[2];
+
 	if (device_type < 3)
 		applog(LOG_ERR, "Device detected of type %u", device_type);
 	else
@@ -1078,8 +1087,6 @@ static bool icarus_detect_one(const char *devpath)
 	icarus_close(fd);
 
 	nonce_hex = bin2hex(nonce_bin, sizeof(nonce_bin));
-	nonce_hex[2] = '1';
-	nonce_hex[3] = '2';
 	// *** deke ***	
 	if (strncmp(nonce_hex, golden_nonce, 34)) {
 //	if (nonce_bin[0] != 0xbb) {// && strncmp(&nonce_hex[4], &golden_nonce[4], 30)) {
@@ -1483,7 +1490,7 @@ uint64_t get_hashcount_estimate_for_return(struct ICARUS_INFO *info, struct work
 
 bool is_response_for_current_work(uint8_t *nonce_bin, struct work *work)
 {
-	return (memcmp(&nonce_bin[9], work->data, 3) == 0);
+	return (memcmp(&nonce_bin[9], &work->data[180-8-3], 3) == 0);
 }
 
 //
@@ -1744,16 +1751,12 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	//
 
 		// skip sending nonce
-/*
-  		uint8_t data[180];
-		hex2bin(data, "0000000122c10f7f1c8400000000000000029ca3814215d060fcc2ef2c003b21e3b8ea63385c9cd17dddc21bd9a7ca942a0e137837e54a4d54310a09788b53265ec3003416d97cb02987eb735eda3e492f73ed94208d264989b159a03b7151dd66fdba748fdcf6693dc84517000000000010ee5b8aefa76ca17b944ad3c6676c91deb73f0725dc75d06aeae20d2e292587010000637a4d565253356d4f513235466454496b41593877677a566e6f467044746754", 180);
-		memcpy(work->data, data, sizeof(work->data));
 
-*/
 		memcpy(buf, work->midstate, 32);
 		// 3 bytes that are iterated in each new work call to scanhash across all devices.
-		memcpy(&buf[32], &work->data[128], ICARUS_WRITE_SIZE-32-5);
+		memcpy(&buf[32], &work->data[128], ICARUS_WRITE_SIZE-32);
 
+		
 /*
   	char input_str[sizeof(buf)*2+1];
 	for (int i=0; i<sizeof(buf); i++)
@@ -1761,7 +1764,12 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		sprintf(input_str+i*2, "%02X", buf[i]);	
 	}
 	input_str[sizeof(buf)*2] = 0;
-	applog(LOG_WARNING, "Writing input vector to FPGA: %s", input_str);
+	applog(LOG_WARNING, "Writing input vector to FPGA (%d): %s", icarus->device_id, input_str);
+		
+	char *hexstr = bin2hex(work->data, 180);
+	applog(LOG_WARNING, "for header: %s", hexstr);
+	free(hexstr);
+	
 */	
 //		applog(LOG_ERR, "pool nonce %08x, write nonce %08x", *(uint32_t*)work->data, *(uint32_t*)buf);
 //		Tyler Temp
@@ -1874,7 +1882,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	
 	unsigned int volt_raw, temp_raw;	
 	
-	if ((nonce_bin[0] == 0xbb) && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
+	if ((nonce_bin[0] == 0xbb) && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
 	{
 		// nonce
 		nonce_tmp[0] = nonce_bin[13];
@@ -1886,7 +1894,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		icarus->result_is_counter = true;
 
 	}
-	else if ((nonce_bin[0] >= 0x00) && (nonce_bin[0] <= 0x03) && !nonce_bin[2] && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
+	else if ((nonce_bin[0] >= 0x00) && (nonce_bin[0] <= 0x03) && !nonce_bin[3] && !nonce_bin[4] && !nonce_bin[5] && !nonce_bin[6] && !nonce_bin[7] && !nonce_bin[8])
 	{
 		applog(LOG_INFO, "RECEIVED NONCE RESPONSE");
 		// nonce
@@ -1999,27 +2007,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		nonce_found[icarus->device_id]++;
 		nonce_counter++;
 		uint64_t real_nonce = ((uint64_t)nonce_d<<32)+nonce;
-		uint32_t nonce2 = *(uint32_t*)&work->data[180-8];
+		uint32_t nonce2 = 0;
+		memcpy(&nonce2, &work->data[180-8-3], 3);
 		uint32_t disp_nonce2 = nonce2;
-		if (info->expected_cores >= 9)
-		{
-			nonce2 &= 0xffffff;
-			nonce2 = bswap_32(nonce2);
-			real_nonce |= ((uint64_t)htole32(nonce2))<<32;
-/*
-			char nonce_str[8*2+1];
-			uint8_t *buf = &nonce2;
-			for (int i =0; i < 4; i++)
-				sprintf(nonce_str+i*2, "%02X", buf[i]);	
-			nonce_str[4*2] = 0;
-			applog(LOG_ERR, "Nonce 2 %s", nonce_str);
-			buf = &real_nonce;
-			for (int i =0; i < 8; i++)
-				sprintf(nonce_str+i*2, "%02X", buf[i]);	
-			nonce_str[8*2] = 0;
-			applog(LOG_ERR, "Real Nonce %s", nonce_str);
-*/
-		}
 		applog(LOG_WARNING, "VCU1525 %d: work 0x%08X,  nonce 0x%016lX, [core %d]", icarus->device_id, disp_nonce2, real_nonce, nonce_d);
 		uint64_t flip_nonce = bswap_64(real_nonce);
 //		applog(LOG_WARNING, "real nonce = 0x%0llX, flip nonce = 0x%0llX", real_nonce, flip_nonce);
@@ -2033,7 +2023,9 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	if (was_hw_error)
 		do_icarus_close(thr);
 
-	if (is_response_for_current_work(nonce_bin, work))
+	if (true)
+//TODO: renable		
+//	if (is_response_for_current_work(nonce_bin, work))
 	{
 		hash_count = nonce;
 		hash_count++;
@@ -2070,7 +2062,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 		uint32_t oldWorkId=0;
 		uint32_t workId=0;
 		memcpy(&oldWorkId, &nonce_bin[9], 3);
-		memcpy(&workId, work->data, 3);
+		memcpy(&workId, &work->data[180-8-3], 3);
 		applog(LOG_DEBUG, "FPGA %d, core %d got old work [0x%08X] response!!!! Current work: 0x%08X", icarus->device_id, nonce_d, oldWorkId, workId);
 		applog(LOG_ERR, "FPGA %d, core %d got old work [0x%08X] response!!!! Current work: 0x%08X", icarus->device_id, nonce_d, oldWorkId, workId);
 		display_received_message(nonce_bin);

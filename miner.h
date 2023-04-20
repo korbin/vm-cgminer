@@ -1219,7 +1219,7 @@ struct work {
 	char		*nonce2;
 	char		*ntime;
 	double		sdiff;
-	char        nonce1[11];
+	char        	nonce1[11];
 	uint64_t 	res_nonce;
 
 	bool		gbt;

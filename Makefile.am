@@ -43,7 +43,7 @@ cgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h	\
 		   util.c util.h uthash.h logging.h		\
 		   sha2.c sha2.h api.c usbutils.h 
 
-cgminer_SOURCES	+= blake3/blake3.c blake3/blake3_dispatch.c blake3/blake3_portable.c 
+cgminer_SOURCES	+= blake3/blake3.c blake3/blake3_dispatch.c blake3/blake3_portable.c blake3-dedmaroz.c
 if HAVE_WINDOWS
 #cgminer_SOURCES	+= blake3/blake3_sse2_x86-64_windows_gnu.S blake3/blake3_sse41_x86-64_windows_gnu.S blake3/blake3_avx2_x86-64_windows_gnu.S \
     blake3/blake3_avx512_x86-64_windows_gnu.S

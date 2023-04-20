@@ -266,7 +266,7 @@ struct block {
 static struct block *blocks = NULL;
 
 
-int swork_id;
+int swork_id=1;
 
 /* For creating a hash database of stratum shares submitted that have not had
  * a response yet */
@@ -3760,11 +3760,26 @@ void sha512_256_32(unsigned char *in, unsigned char *out)
 
 void calc_midstate(struct work *work)
 {
+	unsigned char midstate1[32];
+	unsigned char midstate2[32];	
+	/*
+	char *hexstr = "91c90001726b42f62c8400000000000000029ca3814215d060fcc2ef2c003b21e3b8ea63385c9cd17dddc21bd9a7ca942a0e137837e54a4d54310a09788b53265ec3003416d97cb02987eb735eda3e492f73ed94208d264989b159a03b7151dd66fdba748fdcf6693dc84517000000000010ee5b8aefa76ca17b944ad3c6676c91deb73f0725dc75d06aeae20d2e292587010000637a4d565253356d4f513235466454496b41593877677a56000000008e758d04";
+	uint8_t buf[180];
+	hex2bin(buf, hexstr, 180);
+	BLAKE3_START(buf, &midstate1[0]);	
+	BLAKE3_MAIN(&buf[64], &midstate1[0], work->midstate);	
+	*/
+	BLAKE3_START(work->data, &midstate1[0]);	
+	BLAKE3_MAIN(&work->data[64], &midstate1[0], work->midstate);	
+	/*
+	 * couldn't find the midstate in the following code so not using for now
+	 *
 	blake3_hasher hasher;
 	blake3_hasher_init(&hasher);
 	blake3_hasher_update(&hasher, work->data, 128);
 	// Finalize the hash. BLAKE3_OUT_LEN is the default output length, 32 bytes.
 	blake3_hasher_finalize(&hasher, work->midstate, BLAKE3_OUT_LEN);
+	*/
 }
 
 static void regen_hash(struct work *work)
@@ -3778,30 +3793,35 @@ static void regen_hash(struct work *work)
 	unsigned char inp[80];		
 	unsigned char hash2[32];	
 	unsigned char buf[180];
+	uint8_t output[BLAKE3_OUT_LEN];
 
-	memcpy(buf, work->data, 180);
-	memcpy(buf, &work->res_nonce, sizeof(work->res_nonce));
+
+	memset(buf,0,180);
+	memcpy(buf, &work->data[128], 76-32);
+	memcpy(&buf[76-32], &work->res_nonce, sizeof(work->res_nonce));
+	BLAKE3_END(buf, work->midstate, output);	
+
+/*
 	blake3_hasher hasher;
 	blake3_hasher_init(&hasher);
 	blake3_hasher_update(&hasher, buf, 180);
 	// Finalize the hash. BLAKE3_OUT_LEN is the default output length, 32 bytes.
-	uint8_t output[BLAKE3_OUT_LEN];
 	blake3_hasher_finalize(&hasher, output, BLAKE3_OUT_LEN);
-	memcpy(work->hash, output, 32);
+*/	memcpy(work->hash, output, 32);
 
-	/*
 	
-	char input_str[180*3+1];
-	for (int i=0; i<180; i++)
+/*	
+	char input_str[84*3+1];
+	for (int i=0; i<84; i++)
 	{
 		sprintf(input_str+i*3, "%02X ", buf[i]);	
 	}
-	input_str[180*3] = 0;
+	input_str[84*3] = 0;
 	applog(LOG_WARNING, "For input: %s", input_str);
 	char nonce_str[8*3+1];
 	for (int i=0; i<8; i++)
 	{
-		sprintf(nonce_str+i*3, "%02X ", buf[i]);	
+		sprintf(nonce_str+i*3, "%02X ", buf[76-32+i]);	
 	}
 	nonce_str[8*3] = 0;
 	applog(LOG_WARNING, "For nonce result: %s", nonce_str);
@@ -3814,7 +3834,7 @@ static void regen_hash(struct work *work)
 	applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
 */
 	return;
-	
+
 	/*
 	 * used with radiant coin
 	 *
@@ -3910,14 +3930,12 @@ static void *submit_work_thread(void *userdata)
 		uint32_t *hash32 = (uint32_t *)work->hash;
 		uint64_t nonce;
 		bool submitted = false;
-		char *noncehex;
 		char s[1024];
 
 		sshare->sshare_time = time(NULL);
 		/* This work item is freed in parse_stratum_response */
 		sshare->work = work;
 		nonce = work->res_nonce;
-		noncehex = bin2hex((const unsigned char *)&nonce, 8);
 		memset(s, 0, 1024);
 
 		mutex_lock(&sshare_lock);
@@ -3925,10 +3943,18 @@ static void *submit_work_thread(void *userdata)
 		sshare->id = swork_id++;
 		mutex_unlock(&sshare_lock);
 
-		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\", \"graffiti\":\"dekeminer\"}, \"id\": %d, \"method\": \"mining.submit\"}",
-			work->job_id, noncehex, sshare->id);
-		free(noncehex);
-
+		uint8_t graffiti[32];
+		memset(graffiti, 0, 32-8-3);
+		memcpy(&graffiti[32-8-3], &work->data[180-8-3],3);
+		memcpy(&graffiti[32-8], (unsigned char *)&nonce, 8);
+		
+		char *randomness = bin2hex(work->data, 8);
+		char *graffiti_hex = bin2hex(graffiti, 32);
+		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\", \"graffiti\":\"%s\"}, \"id\": %d, \"method\": \"mining.submit\"}",
+			work->job_id, randomness, graffiti_hex, sshare->id);
+		applog(LOG_ERR, "Submit message: %s", s);
+		free(graffiti_hex);
+		free(randomness);
 		applog(LOG_INFO, "Submitting share %08lx to pool %d",
 					(long unsigned int)htole32(hash32[6]), pool->pool_no);
 
@@ -6064,7 +6090,8 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	/* Use intermediate lock to update the one pool variable */
 	cg_ilock(&pool->data_lock);
 
-	*(uint32_t *)&work->data[180-8] = htole32(pool->nonce2);
+	uint32_t nonce2_le = htole32(pool->nonce2);
+	memcpy(&work->data[180-8-3], &nonce2_le, 3);  
 	
 	pool->nonce2++;
 	/* Downgrade to a read lock to read off the pool variables */
@@ -6075,8 +6102,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	work->job_id = strdup(pool->swork.job_id);
 	memcpy(work->target, pool->gbt_target, 32);
 	/* Convert hex data to binary data for work */
-	if (unlikely(!hex2bin(work->data, pool->swork.header, 172)))
-		quit(1, "Failed to convert header to data in gen_stratum_work");
+	hex2bin(work->data, pool->swork.header, 180-8-3);
 	cg_runlock(&pool->data_lock);
 
 	applog(LOG_DEBUG, "Work job_id %s", work->job_id);
@@ -6161,59 +6187,60 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 	work->pool->diff1 += work->device_diff;
 	mutex_unlock(&stats_lock);
 
-	/* Do one last check before attempting to submit the work */
-	rebuild_hash(work);
-	flip32(hash2_32, work->hash);
+    /* Do one last check before attempting to submit the work */
+    rebuild_hash(work);
+    flip32(hash2_32, work->hash);
 
-	diff1targ = opt_scrypt ? 0x0000ffffUL : 0;	
+    diff1targ = opt_scrypt ? 0x0000ffffUL : 0;
 
-	if (*(uint32_t *)work->hash != 0) {
-//	if (be32toh(hash2_32[7]) > diff1targ) {
-		applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%0X",
-				thr->cgpu->drv->name, thr->cgpu->device_id, *(uint32_t*)work->hash);
+    if (*(uint32_t *)work->hash != 0) {
+//  if (be32toh(hash2_32[7]) > diff1targ) {
+        applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%0X",
+                thr->cgpu->drv->name, thr->cgpu->device_id, *(uint32_t*)work->hash);
 
-		inc_hw_errors(thr);
-		return;
-	}	
+        inc_hw_errors(thr);
+        return;
+    }
 
 // *** /DM/ ***
 
-	mutex_lock(&stats_lock);
-	thr->cgpu->last_device_valid_work = time(NULL);
-	mutex_unlock(&stats_lock);
+    mutex_lock(&stats_lock);
+    thr->cgpu->last_device_valid_work = time(NULL);
+    mutex_unlock(&stats_lock);
 
 
-	for (int i = 0; i < 32; i ++)
-	{
-		if (work->hash[i] > work->target[i])
-		{
-			applog(LOG_ERR, "Share below target");
+    for (int i = 0; i < 32; i ++)
+    {
+        if (work->hash[i] > work->target[i])
+        {
+            applog(LOG_ERR, "Share below target");
 
-			return;
-		}
-		if (work->hash[i] < work->target[i])
-			break;
-	}
-/*	char result_hash_str[32*3+1];
-	for (int i=0; i<32; i++)
-	{
-		sprintf(result_hash_str+i*3, "%02X ", work->hash[i]);	
-	}
-	result_hash_str[32*3] = 0;
-	applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
-	char target_str[33];
-	memcpy(target_str, work->target, 32);
-	target_str[32] = 0;
-	applog(LOG_WARNING, "target: %s", target_str);
-
-	if (!fulltest(work->hash, work->target)) {
-		applog(LOG_INFO, "Share below target");
-		return;
-	}
+            return;
+        }
+        if (work->hash[i] < work->target[i])
+            break;
+    }
+  char result_hash_str[32*3+1];
+    for (int i=0; i<32; i++)
+    {
+        sprintf(result_hash_str+i*3, "%02X ", work->hash[i]);   
+    }
+    result_hash_str[32*3] = 0;
+    applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
+    char target_str[33];
+    memcpy(target_str, work->target, 32);
+    target_str[32] = 0;
+    applog(LOG_WARNING, "target: %s", target_str);
+/*(
+    if (!fulltest(work->hash, work->target)) {
+        applog(LOG_INFO, "Share below target");
+        return;
+    }
 */
-	
-	
+
 	submit_work_async(work, &tv_work_found);
+	return;
+	/* Do one last check before attempting to submit the work */
 }
 
 static inline bool abandon_work(struct work *work, struct timeval *wdiff, uint64_t hashes)

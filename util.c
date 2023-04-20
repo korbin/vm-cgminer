@@ -1233,7 +1233,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		goto out;
 	}
 	strcpy(pool->swork.header, header_hex_str);
-    	hex2bin(pool->swork.header, pool->nonce1, strlen(pool->nonce1)/2);
+	memcpy(pool->swork.header, pool->nonce1, strlen(pool->nonce1));
 	cg_wunlock(&pool->data_lock);
 
 	if (opt_protocol) {
@@ -1604,7 +1604,7 @@ resend:
 		else
 		{
 		//sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\""PACKAGE"/"VERSION"\"]}", swork_id++);
-		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"body\": {\"version\":1,\"agent\":\"vm-cgminer/1.0.0-IronFish\", \"name\": \"test\", \"publicAddress\": \"%s\"}}", swork_id++, pool->rpc_user);
+		sprintf(s, "{\"id\": %d, \"method\": \"mining.subscribe\", \"body\": {\"version\":2, \"publicAddress\": \"%s\"}}", swork_id++, pool->rpc_user);
 //	strcpy(s, "{\"id\":0,\"method\":\"mining.subscribe\",\"body\":{\"version\":1,\"agent\":\"BzMiner/v14.1.0\",\"name\":\"cztst\",\"publicAddress\":\"5a2b672bfa6bc68b6e58e717572bcea37b8c87a94249687e55e5dd70535f5b58=5000000000\",\"extend\":[\"mining.submitted\"]}}");
 		}
 			 // *** DMz ***
