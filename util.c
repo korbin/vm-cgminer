@@ -1261,6 +1261,7 @@ static bool parse_target(struct pool *pool, json_t *val)
 	cg_wunlock(&pool->data_lock);
 
 	applog(LOG_DEBUG, "Pool %d target set to %s", pool->pool_no, target);
+//TODO: remove
 	applog(LOG_ERR, "Pool %d target set to %s", pool->pool_no, target);
 
 	return true;

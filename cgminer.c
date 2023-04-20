@@ -218,7 +218,7 @@ cglock_t control_lock;
 pthread_mutex_t stats_lock;
 
 int hw_errors;
-int total_accepted, total_rejected, total_diff1;
+int total_accepted, total_rejected, total_submitted, total_diff1;
 int total_getworks, total_stale, total_discarded;
 double total_diff_accepted, total_diff_rejected, total_diff_stale;
 static int staged_rollable;
@@ -3973,6 +3973,7 @@ static void *submit_work_thread(void *userdata)
 				pool->sshares++;
 				mutex_unlock(&sshare_lock);
 
+				total_submitted ++;
 				applog(LOG_DEBUG, "Successfully submitted, adding to stratum_shares db");
 				submitted = true;
 				break;
@@ -4799,6 +4800,7 @@ void zero_stats(void)
 	total_getworks = 0;
 	total_accepted = 0;
 	total_rejected = 0;
+	total_submitted= 0;
 	hw_errors = 0;
 	total_stale = 0;
 	total_discarded = 0;
@@ -5402,15 +5404,15 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	else
 		err = ((float)hw_errors / (float)nonce_counter) * 100;
 
-	if(total_rejected == 0)
+	if(total_submitted == 0)
 		err2 = 0;
 	else
-		err2 = ((float)total_rejected / ((float)total_rejected + (float)total_accepted)) * 100;
+		err2 = ((float)total_rejected / total_submitted) * 100;
 
 	sprintf(statusline, "%s(%ds):%s (avg):%sh/s Pool: %sh/s | A:%d  R:%d [%.2f%] S:%d HW:%d [%.2f%]",
 		want_per_device_stats ? "ALL " : "",
 		opt_log_interval, displayed_rolling, displayed_hashes, disp_pool_hashes,
-		total_accepted, total_rejected, err2, nonce_counter, hw_errors,  err);
+		total_accepted, total_rejected, err2, total_submitted, hw_errors,  err);
 	// *** /DM/ ***
 
 	local_mhashes_done = 0;
@@ -5723,6 +5725,9 @@ static void *stratum_thread(void *userdata)
 		 * has not had its idle flag cleared */
 		stratum_resumed(pool);
 
+		if (opt_protocol)
+			applog(LOG_WARNING, "Received Pool Message: %s", s);
+			
 		if (!parse_method(pool, s) && !parse_stratum_response(pool, s))
 			applog(LOG_INFO, "Unknown stratum msg: %s", s);
 		free(s);
@@ -6227,10 +6232,10 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
     }
     result_hash_str[32*3] = 0;
     applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
-    char target_str[33];
-    memcpy(target_str, work->target, 32);
-    target_str[32] = 0;
+	
+	char *target_str = bin2hex(work->target, 32);
     applog(LOG_WARNING, "target: %s", target_str);
+	free(target_str);
 /*(
     if (!fulltest(work->hash, work->target)) {
         applog(LOG_INFO, "Share below target");
@@ -7169,13 +7174,13 @@ void print_summary(void)
 	applog(LOG_WARNING, "Average hashrate: %.1f %shash/s", displayed_hashes, mhash_base? "Mega" : "Kilo");
 	applog(LOG_WARNING, "Solved blocks: %d", found_blocks);
 	applog(LOG_WARNING, "Best share difficulty: %s", best_share);
-	applog(LOG_WARNING, "Share submissions: %d", total_accepted + total_rejected);
+	applog(LOG_WARNING, "Share submissions: %d", total_submitted);
 	applog(LOG_WARNING, "Accepted shares: %d", total_accepted);
 	applog(LOG_WARNING, "Rejected shares: %d", total_rejected);
 	applog(LOG_WARNING, "Accepted difficulty shares: %1.f", total_diff_accepted);
 	applog(LOG_WARNING, "Rejected difficulty shares: %1.f", total_diff_rejected);
 	if (total_accepted || total_rejected)
-		applog(LOG_WARNING, "Reject ratio: %.1f%%", (double)(total_rejected * 100) / (double)(total_accepted + total_rejected));
+		applog(LOG_WARNING, "Reject ratio: %.1f%%", (double)(total_rejected * 100) / (double)(total_submitted));
 	applog(LOG_WARNING, "Hardware errors: %d", hw_errors);
 	applog(LOG_WARNING, "Utility (accepted shares / min): %.2f/min", utility);
 	applog(LOG_WARNING, "Work Utility (diff1 shares solved / min): %.2f/min\n", work_util);
