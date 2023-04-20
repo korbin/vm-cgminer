@@ -2064,8 +2064,10 @@ static void curses_print_status(void)
 	mvwhline(statuswin, 2, 0, ' ', 4);	
 	//mvwhline(statuswin, 2, 0, ' ', 100);	
 	wattroff(statuswin, A_REVERSE);	
+	wattron(statuswin, A_BOLD);
 	mvwprintw(statuswin, statusy-1, 0, " %s", statusline);
 	wclrtoeol(statuswin);
+	wattroff(statuswin, A_BOLD);
 	if ((pool_strategy == POOL_LOADBALANCE  || pool_strategy == POOL_BALANCE) && total_pools > 1) {
 		mvwprintw(statuswin, 3, 0, " Connected to multiple pools with%s LP",
 			have_longpoll ? "": "out");
@@ -5410,10 +5412,10 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	else
 		err2 = ((float)total_rejected / total_submitted) * 100;
 
-	sprintf(statusline, "%s(%ds):%s (avg):%sh/s Pool: %sh/s | A:%d  R:%d [%.2f%] S:%d HW:%d [%.2f%]",
+	sprintf(statusline, "Totals: %s(%ds):%s (avg):%sh/s Pool: %sh/s | A:%d R:%d S:%d HW:%d [%.2f%]",
 		want_per_device_stats ? "ALL " : "",
 		opt_log_interval, displayed_rolling, displayed_hashes, disp_pool_hashes,
-		total_accepted, total_rejected, err2, total_submitted, hw_errors,  err);
+		total_accepted, total_rejected, total_submitted, hw_errors,  err);
 	// *** /DM/ ***
 
 	local_mhashes_done = 0;
@@ -6199,6 +6201,20 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 
     diff1targ = opt_scrypt ? 0x0000ffffUL : 0;
 
+	if (opt_protocol)
+	{
+	    char result_hash_str[32*3+1];
+	    for (int i=0; i<32; i++)
+	    {
+	        sprintf(result_hash_str+i*3, "%02X ", work->hash[i]);   
+	    }
+	    result_hash_str[32*3] = 0;
+	    applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
+		
+		char *target_str = bin2hex(work->target, 32);
+	    applog(LOG_DEBUG, "target: %s", target_str);
+		free(target_str);
+	}
     if (*(uint32_t *)work->hash != 0) {
 //  if (be32toh(hash2_32[7]) > diff1targ) {
         applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%0X",

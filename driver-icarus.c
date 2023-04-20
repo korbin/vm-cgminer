@@ -987,7 +987,7 @@ static bool icarus_detect_one(const char *devpath)
 
     // *** deke ***
 	const char golden_ob[] =				
-        "C100003C3E000000000000000019BD62F9608E5E1A9CE16106B664152A5F570D31FBEB21C48049414ACFD9D66056DE680277501DB2FC8A3289088A3F73BF19D61E36282213CF5482B4C92DCB79EF6D";
+        "B18B3BCBDF6444C8A66A022DE08045CA04DAB2ACED6FAAC779334BF034941D41EBB0E97354859D29D671506DD2678BA087010000000000000000000000000000000000000000000000220000";
 /*
 		"00000000000000000000000000000000"
 		"00000000000000000000000000000000"
@@ -1002,7 +1002,7 @@ static bool icarus_detect_one(const char *devpath)
 		"0000000000000000000000000000000";
 */
 
-	const char golden_nonce[] = "011200000000000000c100001100062034";
+	const char golden_nonce[] = "01010100000000000000000000000ee89e";
 //	const char golden_nonce[] = "bb00000000000000000000000004000000";
 	const uint32_t golden_nonce_val = 0x00000000;	
 	
@@ -1211,7 +1211,7 @@ static bool icarus_detect_one(const char *devpath)
 	}
 	else
 	{
-		info->expected_cores = 9;
+		info->expected_cores = 1;
 		applog(LOG_ERR, "Can't confirm bitstream core count. Expecting %d cores.", info->expected_cores);
 	}
 
@@ -1990,7 +1990,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	curr_hw_errors = icarus->hw_errors;
 	if (!icarus->result_is_counter)
 	{
-		
+/*		
 		if (nonce < 0xffffff)
 		{
   			char input_str[sizeof(buf)*2+1];
@@ -2001,7 +2001,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			input_str[sizeof(buf)*2] = 0;
 			applog(LOG_WARNING, "Found Good Test !!!! low nonce input vector: %s", input_str);
 		}
-		
+*/		
 		nonce_found[icarus->device_id]++;
 		nonce_counter++;
 		uint64_t real_nonce = ((uint64_t)nonce_d<<32)+nonce;
