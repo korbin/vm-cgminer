@@ -2064,27 +2064,27 @@ static void curses_print_status(void)
 	mvwhline(statuswin, 2, 0, ' ', 4);	
 	//mvwhline(statuswin, 2, 0, ' ', 100);	
 	wattroff(statuswin, A_REVERSE);	
-	mvwprintw(statuswin, 3, 0, " %s", statusline);
+	mvwprintw(statuswin, statusy-1, 0, " %s", statusline);
 	wclrtoeol(statuswin);
 	if ((pool_strategy == POOL_LOADBALANCE  || pool_strategy == POOL_BALANCE) && total_pools > 1) {
-		mvwprintw(statuswin, 4, 0, " Connected to multiple pools with%s LP",
+		mvwprintw(statuswin, 3, 0, " Connected to multiple pools with%s LP",
 			have_longpoll ? "": "out");
 	} else if (pool->has_stratum) {
-		mvwprintw(statuswin, 4, 0, " Connected to %s diff %s with stratum as user %s",
+		mvwprintw(statuswin, 3, 0, " Connected to %s diff %s with stratum as user %s",
 			pool->sockaddr_url, pool->diff, pool->rpc_user);
 	} else {
-		mvwprintw(statuswin, 4, 0, " Connected to %s diff %s with%s %s as user %s",
+		mvwprintw(statuswin, 3, 0, " Connected to %s diff %s with%s %s as user %s",
 			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
 			pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
 	}
 	wclrtoeol(statuswin);
 	
-	mvwprintw(statuswin, 5, 0, " Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
+	mvwprintw(statuswin, 4, 0, " Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
 		  current_hash, block_diff, blocktime, best_share);
-	mvwhline(statuswin, 6, 0, '-', 100);    
-    mvwprintw(statuswin, 7, 1, "FPGA: Xilinx VCU1525 [16nm Xilinx Virtex UltraScale+ VU9P]"); 
-    mvwhline(statuswin, 8, 0, '-', 100);
-	mvwhline(statuswin, statusy - 1, 0, '-', 100);	
+	mvwhline(statuswin, 5, 0, '-', 100);    
+    mvwprintw(statuswin, 6, 1, "FPGA: Xilinx VCU1525 [16nm Xilinx Virtex UltraScale+ VU9P]"); 
+    mvwhline(statuswin, 7, 0, '-', 100);
+//	mvwhline(statuswin, statusy - 1, 0, '-', 100);	
 	// *** /DM/ ***
 }
 
@@ -3952,7 +3952,8 @@ static void *submit_work_thread(void *userdata)
 		char *graffiti_hex = bin2hex(graffiti, 32);
 		sprintf(s, "{\"body\": {\"miningRequestId\": %s, \"randomness\":\"%s\", \"graffiti\":\"%s\"}, \"id\": %d, \"method\": \"mining.submit\"}",
 			work->job_id, randomness, graffiti_hex, sshare->id);
-		applog(LOG_ERR, "Submit message: %s", s);
+		if (opt_protocol)
+			applog(LOG_WARNING, "Submit message: %s", s);
 		free(graffiti_hex);
 		free(randomness);
 		applog(LOG_INFO, "Submitting share %08lx to pool %d",
@@ -6218,7 +6219,7 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
     {
         if (work->hash[i] > work->target[i])
         {
-            applog(LOG_ERR, "Share below target");
+            applog(LOG_DEBUG, "Share below target");
 
             return;
         }
@@ -6231,10 +6232,10 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
         sprintf(result_hash_str+i*3, "%02X ", work->hash[i]);   
     }
     result_hash_str[32*3] = 0;
-    applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
+    applog(LOG_DEBUG, "Received hash result: %s", result_hash_str);
 	
 	char *target_str = bin2hex(work->target, 32);
-    applog(LOG_WARNING, "target: %s", target_str);
+    applog(LOG_DEBUG, "target: %s", target_str);
 	free(target_str);
 /*(
     if (!fulltest(work->hash, work->target)) {
@@ -7014,6 +7015,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			curses_print_status();
 			for (i = 0; i < mining_threads; i++)
 				curses_print_devstatus(i);
+
 			touchwin(statuswin);
 			wrefresh(statuswin);
 			touchwin(logwin);
@@ -7895,7 +7897,7 @@ int main(int argc, char *argv[])
 	strcat(cgminer_path, "/");
 
 	// *** deke ***
-    devcursor = 9; 
+    devcursor = 8; 
 	// *** /DM/ ***
 	logstart = devcursor + 1;
 	logcursor = logstart + 1;

@@ -1987,12 +1987,10 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	//applog(LOG_WARNING, "VCU1525 %d: nonce %08x [core %d] Job ID: %s, Nonce1: %s, Nonce2: %s, Hs: %f", icarus->device_id, nonce, nonce_d, work->job_id, work->nonce1, work->nonce2, info->Hs);
 	//
 	
-	// *** /DM/ ***
-
 	curr_hw_errors = icarus->hw_errors;
 	if (!icarus->result_is_counter)
 	{
-		/*
+		
 		if (nonce < 0xffffff)
 		{
   			char input_str[sizeof(buf)*2+1];
@@ -2003,7 +2001,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			input_str[sizeof(buf)*2] = 0;
 			applog(LOG_WARNING, "Found Good Test !!!! low nonce input vector: %s", input_str);
 		}
-		*/
+		
 		nonce_found[icarus->device_id]++;
 		nonce_counter++;
 		uint64_t real_nonce = ((uint64_t)nonce_d<<32)+nonce;
