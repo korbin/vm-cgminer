@@ -10,6 +10,7 @@
 
 #include "config.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -1254,15 +1255,24 @@ static bool parse_target(struct pool *pool, json_t *val)
 	if (!json_is_string(target_val))
 		return false;
 
-	const char *target = json_string_value(target_val);
+	const char *target_hex = json_string_value(target_val);
 
+	double target=0;
+	uint8_t targetbin[32];
+	hex2bin(targetbin, target_hex, 32);
+	for (int i=0;i < 32; ++i)
+	{
+		target *=256;
+		target += targetbin[i];
+	}
+//	applog(LOG_ERR, "For target: %s", targetstr);
+	double diff = pow(2,256)/target;
 	cg_wlock(&pool->data_lock);
-	hex2bin(pool->gbt_target, target, 32);
+	memcpy(pool->gbt_target, targetbin, 32);
+	pool->swork.diff = diff;
 	cg_wunlock(&pool->data_lock);
 
-	applog(LOG_DEBUG, "Pool %d target set to %s", pool->pool_no, target);
-//TODO: remove
-	applog(LOG_ERR, "Pool %d target set to %s", pool->pool_no, target);
+	applog(LOG_DEBUG, "Pool %d target set to %s, %.0lf, difficulty %.0lf", pool->pool_no, target_hex, target, diff);
 
 	return true;
 }

@@ -54,6 +54,8 @@
 #include "elist.h"
 #include "fpgautils.h"
 
+extern bool opt_core_states;
+
 void display_received_message(uint8_t *nonce_bin);
 
 // *** deke ***
@@ -987,7 +989,7 @@ static bool icarus_detect_one(const char *devpath)
 
     // *** deke ***
 	const char golden_ob[] =				
-        "B18B3BCBDF6444C8A66A022DE08045CA04DAB2ACED6FAAC779334BF034941D41EBB0E97354859D29D671506DD2678BA087010000000000000000000000000000000000000000000000220000";
+        "E315B8117A887FF9A7690A0688E2AC678FB2956320D145DF78CFF4D2B68BC02F482783C2DFB59414E3DF492C88B477A487010000000000000000000000000000000000000000000000730100";
 /*
 		"00000000000000000000000000000000"
 		"00000000000000000000000000000000"
@@ -1002,7 +1004,7 @@ static bool icarus_detect_one(const char *devpath)
 		"0000000000000000000000000000000";
 */
 
-	const char golden_nonce[] = "01010100000000000000000000000ee89e";
+	const char golden_nonce[] = "010101000000000000000000000000bb2d";
 //	const char golden_nonce[] = "bb00000000000000000000000004000000";
 	const uint32_t golden_nonce_val = 0x00000000;	
 	
@@ -1265,6 +1267,9 @@ void display_received_message(uint8_t *nonce_bin)
 
 void icarus_statline(char *logline, struct cgpu_info *cgpu)
 {
+
+	if (!opt_core_states)
+		return;
 	char str_active_cores[256];
 	struct ICARUS_INFO *info;
 	info = icarus_info[cgpu->device_id];
@@ -1990,9 +1995,11 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	curr_hw_errors = icarus->hw_errors;
 	if (!icarus->result_is_counter)
 	{
-/*		
-		if (nonce < 0xffffff)
+		if (nonce_d == 0 && nonce < 0xffffff)
 		{
+			char buf[ICARUS_WRITE_SIZE];
+			memcpy(buf, work->midstate, 32);
+			memcpy(&buf[32], &work->data[128], ICARUS_WRITE_SIZE-32);
   			char input_str[sizeof(buf)*2+1];
 			for (int i=0; i<sizeof(buf); i++)
 			{
@@ -2001,7 +2008,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			input_str[sizeof(buf)*2] = 0;
 			applog(LOG_WARNING, "Found Good Test !!!! low nonce input vector: %s", input_str);
 		}
-*/		
+		
 		nonce_found[icarus->device_id]++;
 		nonce_counter++;
 		uint64_t real_nonce = ((uint64_t)nonce_d<<32)+nonce;

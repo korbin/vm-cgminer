@@ -81,6 +81,7 @@ struct strategies strategies[] = {
 static char packagename[256];
 
 bool opt_protocol;
+bool opt_core_states, opt_core_detail;
 static bool opt_benchmark;
 bool have_longpoll;
 bool want_per_device_stats;
@@ -218,6 +219,10 @@ cglock_t control_lock;
 pthread_mutex_t stats_lock;
 
 int hw_errors;
+double prev_diff;
+double est_pool_hashrate;
+int prev_total_accepted;
+double prev_total_secs;
 int total_accepted, total_rejected, total_submitted, total_diff1;
 int total_getworks, total_stale, total_discarded;
 double total_diff_accepted, total_diff_rejected, total_diff_stale;
@@ -934,6 +939,9 @@ static struct opt_table opt_config_table[] = {
 			"Use nonce range on bitforce devices if supported"),
 #endif
 #ifdef HAVE_CURSES
+	OPT_WITHOUT_ARG("--core-states|-c", opt_set_bool, &opt_core_states,
+			"Display core states"),
+
 	OPT_WITHOUT_ARG("--compact",
 			opt_set_bool, &opt_compact,
 			"Use compact display without per device statistics"),
@@ -2072,20 +2080,19 @@ static void curses_print_status(void)
 		mvwprintw(statuswin, 3, 0, " Connected to multiple pools with%s LP",
 			have_longpoll ? "": "out");
 	} else if (pool->has_stratum) {
-		mvwprintw(statuswin, 3, 0, " Connected to %s diff %s with stratum as user %s",
-			pool->sockaddr_url, pool->diff, pool->rpc_user);
+		mvwprintw(statuswin, 3, 0, " Connected to %s | Pool Diff: %s",
+			pool->sockaddr_url, pool->diff);
 	} else {
 		mvwprintw(statuswin, 3, 0, " Connected to %s diff %s with%s %s as user %s",
 			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
 			pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
 	}
 	wclrtoeol(statuswin);
+	mvwprintw(statuswin, 4, 0, " User: %s", pool->rpc_user);
 	
-	mvwprintw(statuswin, 4, 0, " Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
+	mvwprintw(statuswin, 5, 0, " Block: %s... | Net Diff:%s | Started: %s | Best share: %s   ",
 		  current_hash, block_diff, blocktime, best_share);
-	mvwhline(statuswin, 5, 0, '-', 100);    
-    mvwprintw(statuswin, 6, 1, "FPGA: Xilinx VCU1525 [16nm Xilinx Virtex UltraScale+ VU9P]"); 
-    mvwhline(statuswin, 7, 0, '-', 100);
+	mvwhline(statuswin, 6, 0, '-', 100);    
 //	mvwhline(statuswin, statusy - 1, 0, '-', 100);	
 	// *** /DM/ ***
 }
@@ -2712,6 +2719,7 @@ static inline struct pool *select_pool(bool lagging)
 }
 
 static double DIFFEXACTONE = 26959946667150639794667015087019630673637144422540572481103610249215.0;
+
 static const uint64_t diffone = 0xFFFF000000000000ull;
 
 /*
@@ -2722,26 +2730,15 @@ static void calc_diff(struct work *work, int known)
 	struct cgminer_pool_stats *pool_stats = &(work->pool->cgminer_pool_stats);
 	double difficulty;
 
-	if (opt_scrypt) {
+	if (!known) {
 		uint64_t *data64, d64;
 		char rtarget[32];
 
-		swab256(rtarget, work->target);
-		data64 = (uint64_t *)(rtarget + 2);
+		data64 = (uint64_t *)(work->target + 4);
 		d64 = be64toh(*data64);
 		if (unlikely(!d64))
 			d64 = 1;
 		work->work_difficulty = diffone / d64;
-	} else if (!known) {
-		double targ = 0;
-		int i;
-
-		for (i = 31; i >= 0; i--) {
-			targ *= 256;
-			targ += work->target[i];
-		}
-
-		work->work_difficulty = DIFFEXACTONE / (targ ? : DIFFEXACTONE);
 	} else
 		work->work_difficulty = known;
 	difficulty = work->work_difficulty;
@@ -3254,18 +3251,25 @@ static bool stale_work(struct work *work, bool share)
 	return false;
 }
 
+static uint64_t hash_diff(char *hash)
+{
+	uint64_t *data64, d64, ret;
+	char rhash[32];
+	swab256(rhash, hash);
+	d64 = be64toh(*data64);
+	if (unlikely(!d64))
+		d64 = 1;
+	ret = diffone / d64;
+	return ret;
+}
+
 static uint64_t share_diff(const struct work *work)
 {
 	uint64_t *data64, d64, ret;
 	bool new_best = false;
 	char rhash[32];
 
-	swab256(rhash, work->hash);
-	
-	if (opt_scrypt)
-		data64 = (uint64_t *)(rhash + 2);
-	else
-		data64 = (uint64_t *)(rhash + 4);
+	data64 = (uint64_t *)(work->hash + 4);
 	d64 = be64toh(*data64);
 	if (unlikely(!d64))
 		d64 = 1;
@@ -3878,7 +3882,6 @@ static void rebuild_hash(struct work *work)
 	
 	// I don't know if we can determine from the difficulty the pool
 	// is working on from the header data of Iron Fish? Skipping this for now.
-	return;
 
 
 	work->share_diff = share_diff(work);
@@ -4799,6 +4802,10 @@ void zero_stats(void)
 	int i;
 
 	cgtime(&total_tv_start);
+	prev_total_secs = 0;
+	prev_total_accepted = 0;
+	est_pool_hashrate = 0;
+	prev_diff = 0;
 	total_mhashes_done = 0;
 	total_getworks = 0;
 	total_accepted = 0;
@@ -5019,13 +5026,16 @@ static void display_options(void)
 	clear_logwin();
 retry:
 	wlogprint("[N]ormal [C]lear [S]ilent mode (disable all output)\n");
-	wlogprint("[D]ebug:%s\n[P]er-device:%s\n[Q]uiet:%s\n[V]erbose:%s\n"
+	wlogprint("[D]ebug:%s\nC[O]re States: %s\nCore D[E]tails: %s\n"
+		  "[P]er-device:%s\n[Q]uiet:%s\n[V]erbose:%s\n"
 		  "[R]PC debug:%s\n[W]orkTime details:%s\nco[M]pact: %s\n"
 		  "[L]og interval:%d\n[Z]ero statistics\n",
 		opt_debug ? "on" : "off",
 	        want_per_device_stats? "on" : "off",
 		opt_quiet ? "on" : "off",
 		opt_log_output ? "on" : "off",
+		opt_core_states ? "on" : "off",
+		opt_core_detail ? "on" : "off",
 		opt_protocol ? "on" : "off",
 		opt_worktime ? "on" : "off",
 		opt_compact ? "on" : "off",
@@ -5051,6 +5061,14 @@ retry:
 		want_per_device_stats = false;
 		wlogprint("Output mode reset to normal\n");
 		switch_compact();
+		goto retry;
+	} else if (!strncasecmp(&input, "o", 1)) {
+		opt_core_states ^= true;
+		wlogprint("Core states display %s\n", opt_core_states ? "enabled" : "disabled");
+		goto retry;
+	} else if (!strncasecmp(&input, "e", 1)) {
+		opt_core_states ^= true;
+		wlogprint("Core details display %s\n", opt_core_detail ? "enabled" : "disabled");
 		goto retry;
 	} else if (!strncasecmp(&input, "d", 1)) {
 		opt_debug ^= true;
@@ -5275,26 +5293,20 @@ static inline void thread_reportout(struct thr_info *thr)
 	thr->getwork = true;
 }
 
+double hashrate_for_diff(double diff)
+{
+	return (total_accepted-prev_total_accepted)*diff/(total_secs-prev_total_secs);
+}
+
 double pool_hashrate(struct pool *pool)
 {
 	cg_rlock(&pool->data_lock);
 
-	double target=0;
-	char targetstr[65];
-	for (int i=0;i<32; i++)
-	{
-		target += pow(256,i)*(double)pool->gbt_target[31-i];
-		sprintf(targetstr+i*2, "%02X", pool->gbt_target[i]);
-	}
-	targetstr[64] = 0;
-//	applog(LOG_ERR, "For target: %s", targetstr);
-	double diff = pow(2,256)/target;
-//	double diff = pow(2,256)/pow(2,224);
+	double diff = pool->swork.diff;
 	cg_runlock(&pool->data_lock);
 
-	double hashrate = total_accepted*diff/total_secs;
 //	applog(LOG_ERR, "Pool hashrate should be: %lf, for diff %lf, target %lf, seconds %lf, accepted %u, submits %f", hashrate, diff, target, total_secs, total_accepted, nonce_counter);
-	return hashrate;
+	return hashrate_for_diff(diff);
 }
 
 static void hashmeter(int thr_id, struct timeval *diff,
@@ -5399,7 +5411,11 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	suffix_string(dh64, displayed_hashes, 4);
 	suffix_string(dr64, displayed_rolling, 4);
 	double pool_hashes = pool_hashrate(current_pool());
-	suffix_string(pool_hashes, disp_pool_hashes, 4);
+	double period = total_secs - prev_total_secs;
+	double weight = period/total_secs;
+
+	double temp_est_pool_hashrate = (est_pool_hashrate + pool_hashes*weight)/(1.0+weight);
+	suffix_string(temp_est_pool_hashrate, disp_pool_hashes, 4);
 
 	// *** deke ***
 	if(hw_errors == 0)
@@ -5412,9 +5428,9 @@ static void hashmeter(int thr_id, struct timeval *diff,
 	else
 		err2 = ((float)total_rejected / total_submitted) * 100;
 
-	sprintf(statusline, "Totals: %s(%ds):%s (avg):%sh/s Pool: %sh/s | A:%d R:%d S:%d HW:%d [%.2f%]",
-		want_per_device_stats ? "ALL " : "",
-		opt_log_interval, displayed_rolling, displayed_hashes, disp_pool_hashes,
+	sprintf(statusline, "Totals | (avg):%sh/s | %s(%ds):%s | Pool: %sh/s | A:%d R:%d S:%d HW:%d [%.2f%]",
+		displayed_hashes, want_per_device_stats ? "ALL " : "",
+		opt_log_interval, displayed_rolling, disp_pool_hashes,
 		total_accepted, total_rejected, total_submitted, hw_errors,  err);
 	// *** /DM/ ***
 
@@ -5649,6 +5665,7 @@ static void *stratum_thread(void *userdata)
 {
 	struct pool *pool = (struct pool *)userdata;
 	char threadname[16];
+	bool first_target = true;
 
 	pthread_detach(pthread_self());
 
@@ -5733,6 +5750,44 @@ static void *stratum_thread(void *userdata)
 			
 		if (!parse_method(pool, s) && !parse_stratum_response(pool, s))
 			applog(LOG_INFO, "Unknown stratum msg: %s", s);
+		else
+		{
+			bool changed_diff=false;
+			double new_diff;
+			cg_rlock(&pool->data_lock);
+			
+			if (pool->swork.diff != prev_diff)
+			{
+				if (first_target)
+				{
+					first_target = false;
+					prev_diff = pool->swork.diff;
+				}
+				else
+				{
+					changed_diff = true;
+
+					new_diff = pool->swork.diff;
+				}
+			}
+			cg_runlock(&pool->data_lock);
+			if (changed_diff)
+			{
+				double pool_hashes = hashrate_for_diff(prev_diff);
+				double period = total_secs - prev_total_secs;
+				double weight = period/total_secs;
+				double old_hashrate = est_pool_hashrate;
+
+				if (old_hashrate == 0)
+					est_pool_hashrate = pool_hashes;
+				else
+					est_pool_hashrate = (est_pool_hashrate + pool_hashes*weight)/(1.0+weight);
+				applog(LOG_WARNING, "Changing diff from %.0lf to new diff %.0lf, for time period %.0f and hashrate: %.0lf. Old hashrate: %.0lf, New hashrate: %.0lf", prev_diff, new_diff, period, pool_hashes, old_hashrate, est_pool_hashrate);
+				prev_total_secs = total_secs;
+				prev_total_accepted = total_accepted;
+				prev_diff = new_diff;
+			}
+		}
 		free(s);
 		if (pool->swork.clean) {
 			struct work *work = make_work();
@@ -6212,7 +6267,7 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 	    applog(LOG_WARNING, "Received hash result: %s", result_hash_str);
 		
 		char *target_str = bin2hex(work->target, 32);
-	    applog(LOG_DEBUG, "target: %s", target_str);
+	    	applog(LOG_DEBUG, "target: %s", target_str);
 		free(target_str);
 	}
     if (*(uint32_t *)work->hash != 0) {
@@ -7892,9 +7947,7 @@ int main(int argc, char *argv[])
 	if (unlikely(pthread_cond_init(&gws_cond, NULL)))
 		quit(1, "Failed to pthread_cond_init gws_cond");
 
-	// *** deke ***
 	sprintf(packagename, "%s %s."deke_VERSION, PACKAGE, VERSION);
-	// *** /DM/ ***
 
 	handler.sa_handler = &sighandler;
 	handler.sa_flags = 0;
@@ -7912,9 +7965,7 @@ int main(int argc, char *argv[])
 	free(s);
 	strcat(cgminer_path, "/");
 
-	// *** deke ***
-    devcursor = 8; 
-	// *** /DM/ ***
+    	devcursor = 7; 
 	logstart = devcursor + 1;
 	logcursor = logstart + 1;
 

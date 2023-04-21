@@ -1,10 +1,0 @@
-[?1049h[22;0;0t[1;53r(B[m[4l[?7h[H[2J[12d [2022-09-21 19:37:48] Started cgminer 3.1.1.10
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB2
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB6
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB10
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB14
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB18
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB22
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB26
- [2022-09-21 19:37:48] Icarus Detect: Failed to open /dev/ttyUSB30
- [2022-09-21 19:37:48] All devices disabled, cannot mine![53;1H[?1049l[23;0;0t[?1l>
