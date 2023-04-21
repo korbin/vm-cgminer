@@ -209,8 +209,6 @@ static inline int fsync (int fd)
 #define MIN(x, y)	((x) > (y) ? (y) : (x))
 #define MAX(x, y)	((x) > (y) ? (x) : (y))
 
-// *** deke ***
-#define deke_VERSION "1"
 #define MAX_FPGA 50
 
 extern unsigned int fpga_freq[MAX_FPGA];

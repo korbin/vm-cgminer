@@ -2065,7 +2065,7 @@ static void curses_print_status(void)
 	// *** deke ***
 	wattron(statuswin, A_REVERSE);		
 	mvwhline(statuswin, 0, 0, ' ', 100);	
-	mvwprintw(statuswin, 1, 0, " " PACKAGE " version " VERSION "."deke_VERSION" [Iron Fish] by deke - Started: %s                ", datestamp); 
+	mvwprintw(statuswin, 1, 0, " " PACKAGE " version " VERSION " [Iron Fish] by deke - Started: %s                ", datestamp); 
 	mvwhline(statuswin, 1, 78, ' ', 22);	
 	mvwprintw(statuswin, 2, 4, "Press '?' for hotkeys"); 
 	mvwhline(statuswin, 2, 25, ' ', 75);	
@@ -6276,7 +6276,8 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 	    	applog(LOG_DEBUG, "target: %s", target_str);
 		free(target_str);
 	}
-    if (*(uint32_t *)work->hash != 0 || (work->hash[4] & 0xe0) != 0) {
+	// some cores are 32 bit some are 37, but we will just base it on 32 for now to allow different quantity of cores.
+    if (*(uint32_t *)work->hash != 0) {// || (work->hash[4] & 0xf8) != 0) {
 	    if (opt_protocol)
 	        applog(LOG_ERR, "%s%d: invalid nonce - HW error: hash begin = 0x%02X%02X%02X%02X%02X",
        	         thr->cgpu->drv->name, thr->cgpu->device_id, work->hash[0], work->hash[1], work->hash[2], work->hash[3], work->hash[4] );
@@ -7955,7 +7956,7 @@ int main(int argc, char *argv[])
 	if (unlikely(pthread_cond_init(&gws_cond, NULL)))
 		quit(1, "Failed to pthread_cond_init gws_cond");
 
-	sprintf(packagename, "%s %s."deke_VERSION, PACKAGE, VERSION);
+	sprintf(packagename, "%s %s.", PACKAGE, VERSION);
 
 	handler.sa_handler = &sighandler;
 	handler.sa_flags = 0;

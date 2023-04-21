@@ -292,25 +292,25 @@
 /* #undef MAP_ANONYMOUS */
 
 /* Name of package */
-#define PACKAGE "cgminer"
+#define PACKAGE "vm-cgminer"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "kernel@kolivas.org"
+#define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "cgminer"
+#define PACKAGE_NAME "vm-cgminer"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "cgminer 3.1.1"
+#define PACKAGE_STRING "vm-cgminer 2.0.9"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "cgminer"
+#define PACKAGE_TARNAME "vm-cgminer"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.1.1"
+#define PACKAGE_VERSION "2.0.9"
 
 /* Filename for phatk kernel */
 #define PHATK_KERNNAME "phatk121016"
@@ -369,7 +369,7 @@
 /* #undef USE_ZTEX */
 
 /* Version number of package */
-#define VERSION "3.1.1"
+#define VERSION "2.0.9"
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'wchar_t'. */

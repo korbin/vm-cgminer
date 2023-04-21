@@ -578,11 +578,11 @@ MFLAGS=
 MAKEFLAGS=
 
 # Identity of this package.
-PACKAGE_NAME='cgminer'
-PACKAGE_TARNAME='cgminer'
-PACKAGE_VERSION='3.1.1'
-PACKAGE_STRING='cgminer 3.1.1'
-PACKAGE_BUGREPORT='kernel@kolivas.org'
+PACKAGE_NAME='vm-cgminer'
+PACKAGE_TARNAME='vm-cgminer'
+PACKAGE_VERSION='2.0.9'
+PACKAGE_STRING='vm-cgminer 2.0.9'
+PACKAGE_BUGREPORT=''
 PACKAGE_URL=''
 
 ac_unique_file="cgminer.c"

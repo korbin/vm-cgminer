@@ -970,7 +970,7 @@ static bool icarus_detect_one(const char *devpath)
 
     // *** deke ***
 	const char golden_ob[] =				
-        "E315B8117A887FF9A7690A0688E2AC678FB2956320D145DF78CFF4D2B68BC02F482783C2DFB59414E3DF492C88B477A487010000000000000000000000000000000000000000000000730100";
+        "4085937227C2AF03FDF8299517F46461AAE0F089C5D85BA23CA37B043F2EC19FD9AAA9398E3A54B3E82D954A696687A587010000000000000000000000000000000000000000000000940B00";
 /*
 		"00000000000000000000000000000000"
 		"00000000000000000000000000000000"
@@ -985,7 +985,7 @@ static bool icarus_detect_one(const char *devpath)
 		"0000000000000000000000000000000";
 */
 
-	const char golden_nonce[] = "010101000000000000000000000000bb2d";
+	const char golden_nonce[] = "012d0100000000000000000000009f43e7";
 //	const char golden_nonce[] = "bb00000000000000000000000004000000";
 	const uint32_t golden_nonce_val = 0x00000000;	
 	
@@ -1248,12 +1248,13 @@ void display_received_message(uint8_t *nonce_bin)
 
 void icarus_statline(char *logline, struct cgpu_info *cgpu)
 {
-
-	if (!opt_core_states)
-		return;
-	char str_active_cores[256];
 	struct ICARUS_INFO *info;
 	info = icarus_info[cgpu->device_id];
+	sprintf(logline, ", %d Active Cores", info->active_core_count);
+	if (!opt_core_states)
+		return;
+
+	char str_active_cores[256];
 
 	for (int i = 0; i < info->expected_cores; i++)
 	{
@@ -1264,9 +1265,7 @@ void icarus_statline(char *logline, struct cgpu_info *cgpu)
 
 	}
 	str_active_cores[info->expected_cores] = 0;
-
-	sprintf(logline, ", %d Active Cores: %s", info->active_core_count, str_active_cores);
-
+	sprintf(logline, "%s: %s", logline, str_active_cores);
 }
 
 bool icarus_prepare_work(struct thr_info __maybe_unused *thr, struct work __maybe_unused *work)
@@ -1976,6 +1975,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	curr_hw_errors = icarus->hw_errors;
 	if (!icarus->result_is_counter)
 	{
+		/*
 		if (nonce_d == 0 && nonce < 0xffffff)
 		{
 			uint8_t buf[ICARUS_WRITE_SIZE];
@@ -1989,6 +1989,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 			input_str[sizeof(buf)*2] = 0;
 			applog(LOG_WARNING, "Found Good Test !!!! low nonce input vector: %s", input_str);
 		}
+		*/
 		
 		nonce_found[icarus->device_id]++;
 		nonce_counter++;
