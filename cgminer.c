@@ -6270,8 +6270,7 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 	    	applog(LOG_DEBUG, "target: %s", target_str);
 		free(target_str);
 	}
-    if (*(uint32_t *)work->hash != 0) {
-//  if (be32toh(hash2_32[7]) > diff1targ) {
+    if (*(uint32_t *)work->hash != 0 || work->hash[4] & 0xe0 != 0) {
         applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%0X",
                 thr->cgpu->drv->name, thr->cgpu->device_id, *(uint32_t*)work->hash);
 
@@ -6279,7 +6278,6 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
         return;
     }
 
-// *** /DM/ ***
 
     mutex_lock(&stats_lock);
     thr->cgpu->last_device_valid_work = time(NULL);

@@ -948,31 +948,11 @@ static void get_clocks(int this_option_offset, int *cainsmore_clock, uint8_t dev
 	if (*buf) {
 		tmp = atoi(buf);
 
-		// *** deke ***		
 		
-		if (device_type == 2)
+		if (!(tmp >= 400 && tmp <= 1000))
 		{
-			if (!(tmp >= 400 && tmp <= 1000))
-			{
-				sprintf(err_buf, "Invalid FK33 clock must be between 400 and 1000MHz");
-				quit(1, err_buf);
-			}
-		}
-		else if (device_type == 1 )
-		{
-			if (!(tmp >= 400 && tmp <= 800))
-			{
-				sprintf(err_buf, "Invalid VCU1525 clock must be between 400 and 1000MHz");
-				quit(1, err_buf);
-			}
-		}
-		else if (device_type == 0)
-		{
-			if (!(tmp >= 400 && tmp <= 800))
-			{
-				sprintf(err_buf, "Invalid CVP-13 clock must be between 400 and 1000MHz");
-				quit(1, err_buf);
-			}
+			sprintf(err_buf, "Invalid FK33 clock must be between 400 and 1000MHz");
+			quit(1, err_buf);
 		}
 		*cainsmore_clock = tmp * 2 / 5;	// NB 2.5Mhz units
 	}
