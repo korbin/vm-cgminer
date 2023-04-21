@@ -2186,7 +2186,7 @@ static void curses_print_devstatus(int thr_id)
 	volt_avg,
     awidth, cgpu->accepted,
     rwidth, cgpu->rejected,
-    nonce_found[cgpu->device_id],
+    nonce_submit[cgpu->device_id],
     hwwidth, cgpu->hw_errors,
     err);
 
@@ -2578,8 +2578,11 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 		else
 			outhash = bin2hex(rhash + 4, 4);
 		suffix_string(work->share_diff, diffdisp, 0);
-		sprintf(hashshow, "%s Diff %s/%d%s: Job ID: %s, Nonce: %lu, Nonce2: %u", outhash, diffdisp, intdiff,
-			work->block? " BLOCK!" : "", work->job_id, work->res_nonce, *(uint32_t*)work->data);
+		if (opt_protocol)
+			applog(LOG_WARNING, "%s Diff %s/%d%s: Job ID: %s, Nonce: 0x%016lX, Nonce2: 0x%02X%02X%02X", outhash, diffdisp, intdiff,
+			work->block? " BLOCK!" : "", work->job_id, bswap_64(work->res_nonce), work->data[180-8-1], work->data[180-8-2], work->data[180-8-3]);
+		sprintf(hashshow, "%s Diff %s/%d%s: Nonce: 0x%016lX", outhash, diffdisp, intdiff,
+			work->block? " BLOCK!" : "", bswap_64(work->res_nonce));
 		free(outhash);
 
 		if (opt_worktime) {
@@ -3884,7 +3887,10 @@ static void rebuild_hash(struct work *work)
 	// is working on from the header data of Iron Fish? Skipping this for now.
 
 
+	//TODO: add this back if we figure out how to get net difficulty
+	
 	work->share_diff = share_diff(work);
+	return;
 	if (unlikely(work->share_diff >= current_diff)) {
 		work->block = true;
 		work->pool->solved++;
@@ -4319,10 +4325,7 @@ static void set_blockdiff(const struct work *work)
 
 	swab256(rhash, diffhash);
 
-	if (opt_scrypt)
-		data64 = (uint64_t *)(rhash + 2);
-	else
-		data64 = (uint64_t *)(rhash + 4);
+	data64 = (uint64_t *)(rhash + 4);
 	d64 = be64toh(*data64);
 	if (unlikely(!d64))
 		d64 = 1;
@@ -5460,8 +5463,11 @@ static void stratum_share_result(json_t *val, json_t *res_val, json_t *err_val,
 	hash32 = (uint32_t *)(work->hash);
 	intdiff = floor(work->work_difficulty);
 	suffix_string(work->share_diff, diffdisp, 0);
-	sprintf(hashshow, "%08lx Diff %s/%d%s: Job ID: %s, Nonce: 0x%016lX, Nonce2: %u", (unsigned long)htole32(hash32[6]), diffdisp, intdiff,
-			work->block? " BLOCK!" : "", work->job_id ? work->job_id : "", bswap_64(work->res_nonce), *(uint32_t*)work->data);
+	if (opt_protocol)
+		applog(LOG_WARNING, "%08lx Diff %s/%d%s: Job ID: %s, Nonce: 0x%016lX, Nonce2: 0x%02X%02X%02X", (unsigned long)htole32(hash32[6]), diffdisp, intdiff,
+		work->block? " BLOCK!" : "", work->job_id ? work->job_id : "", bswap_64(work->res_nonce), work->data[180-8-1], work->data[180-8-2], work->data[180-8-3]);
+	sprintf(hashshow, "%08lx Diff %s/%d%s: Nonce: 0x%016lX", (unsigned long)htole32(hash32[6]), diffdisp, intdiff,
+			work->block? " BLOCK!" : "", bswap_64(work->res_nonce));
 	share_result(val, res_val, err_val, work, hashshow, false, "");
 }
 
@@ -6270,14 +6276,16 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
 	    	applog(LOG_DEBUG, "target: %s", target_str);
 		free(target_str);
 	}
-    if (*(uint32_t *)work->hash != 0 || work->hash[4] & 0xe0 != 0) {
-        applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%0X",
-                thr->cgpu->drv->name, thr->cgpu->device_id, *(uint32_t*)work->hash);
+    if (*(uint32_t *)work->hash != 0 || (work->hash[4] & 0xe0) != 0) {
+	    if (opt_protocol)
+	        applog(LOG_ERR, "%s%d: invalid nonce - HW error: hash begin = 0x%02X%02X%02X%02X%02X",
+       	         thr->cgpu->drv->name, thr->cgpu->device_id, work->hash[0], work->hash[1], work->hash[2], work->hash[3], work->hash[4] );
+	    applog(LOG_INFO, "%s%d: invalid nonce - HW error: hash begin = 0x%02X%02X%02X%02X%02X",
+       	         thr->cgpu->drv->name, thr->cgpu->device_id, work->hash[0], work->hash[1], work->hash[2], work->hash[3], work->hash[4] );
 
         inc_hw_errors(thr);
         return;
     }
-
 
     mutex_lock(&stats_lock);
     thr->cgpu->last_device_valid_work = time(NULL);
@@ -6295,6 +6303,7 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
         if (work->hash[i] < work->target[i])
             break;
     }
+
   char result_hash_str[32*3+1];
     for (int i=0; i<32; i++)
     {
@@ -6313,6 +6322,7 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce)
     }
 */
 
+	nonce_submit[thr->cgpu->device_id] ++;
 	submit_work_async(work, &tv_work_found);
 	return;
 	/* Do one last check before attempting to submit the work */

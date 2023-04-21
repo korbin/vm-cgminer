@@ -215,6 +215,7 @@ static inline int fsync (int fd)
 
 extern unsigned int fpga_freq[MAX_FPGA];
 extern int nonce_found[MAX_FPGA]; 
+extern int nonce_submit[MAX_FPGA]; 
 extern int nonce_counter; 
 extern float fpga_temp_1[MAX_FPGA];
 extern float fpga_temp_2[MAX_FPGA];

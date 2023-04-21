@@ -158,6 +158,7 @@ struct ICARUS_HISTORY {
 // *** deke ***
 unsigned int fpga_freq[MAX_FPGA];
 int nonce_found[MAX_FPGA]; 
+int nonce_submit[MAX_FPGA]; 
 int nonce_counter = 0; 
 unsigned int nonce_d = 0;
 int fpga_volt_1[MAX_FPGA];
@@ -1977,7 +1978,7 @@ static int64_t icarus_scanhash(struct thr_info *thr, struct work *work,
 	{
 		if (nonce_d == 0 && nonce < 0xffffff)
 		{
-			char buf[ICARUS_WRITE_SIZE];
+			uint8_t buf[ICARUS_WRITE_SIZE];
 			memcpy(buf, work->midstate, 32);
 			memcpy(&buf[32], &work->data[128], ICARUS_WRITE_SIZE-32);
   			char input_str[sizeof(buf)*2+1];
