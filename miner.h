@@ -1274,6 +1274,9 @@ struct modminer_fpga_state {
 };
 #endif
 
+extern void BLAKE3_END(uint8_t *p_in, uint8_t *p_inm, uint8_t *p_out);
+extern void BLAKE3_MAIN(uint8_t *p_in, uint8_t *p_inm, uint8_t *p_out);
+extern void BLAKE3_START(uint8_t *p_in, uint8_t *p_out);
 extern void get_datestamp(char *, struct timeval *);
 extern void inc_hw_errors(struct thr_info *thr);
 extern void submit_nonce(struct thr_info *thr, struct work *work, uint64_t nonce);
